@@ -1,0 +1,154 @@
+# Unity3D
+
+## Directories
+.gradle
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+
+## Generated meta files
+*.pidb.meta
+*.pdb.meta
+
+## Generated File On Crash Reports
+sysinfo.txt
+
+## Build Output
+*.apk
+*.unitypackage
+
+## Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+## MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+## Windows
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Editors and IDEs
+
+## vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+Session.vim
+.netrwhist
+*~
+tags
+[._]*.un~
+
+## Notepad++
+*.bak
+
+## VisualStudioCode
+.vscode/
+
+## MonoDevelop
+*.userprefs
+*.usertasks
+*.pidb
+*.resources
+test-results/
+
+## JetBrains Rider
+.idea
+out/
+
+## Visual Studio, C# and etc.
+.vs/
+Generated\ Files/
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*_i.c
+*_p.c
+*_h.h
+*.ilk
+*.obj
+*.iobj
+*.pch
+*.pdb
+*.ipdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*_wpftmp.csproj
+*.log
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+*.psess
+*.vsp
+*.vspx
+*.sap
+*.nupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+!**/[Pp]ackages/manifest.json
+*.nuget.props
+*.nuget.targets
+*.[Cc]ache
+!*.[Cc]ache/
+ClientBin/
+~$*
+*.binlog
+*.nvuser
+ExportedObj/
+.consulo/
+*.csproj
+*.unityproj
+*.sln
+*.booproj
+*.svd
+*.opendb
+*.VC.db
+
+# Blender
+*.blend1
