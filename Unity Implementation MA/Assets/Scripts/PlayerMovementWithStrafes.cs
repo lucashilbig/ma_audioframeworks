@@ -41,8 +41,8 @@ public class PlayerMovementWithStrafes : MonoBehaviour
 	float control;
 	float drop;
 
-	public bool JumpQueue = false;
-	public bool wishJump = false;
+	bool JumpQueue = false;
+	bool wishJump = false;
 
 	//UI
 	public Text posText;
@@ -54,16 +54,11 @@ public class PlayerMovementWithStrafes : MonoBehaviour
 	private float ModulasSpeed;
 	//End UI
 
-	public Vector3 moveDirection;
-	public Vector3 moveDirectionNorm;
 	private Vector3 playerVelocity;
 	Vector3 wishdir;
 	Vector3 vec;
-	
-	public float x;
-	public float z;
 
-	public bool IsGrounded;
+	bool IsGrounded;
 
 	public Transform player;
 	Vector3 udp;
@@ -113,11 +108,6 @@ public class PlayerMovementWithStrafes : MonoBehaviour
 		if (udp.magnitude > playerTopVelocity)
 			playerTopVelocity = udp.magnitude;
 	}
-	public void SetMovementDir()
-	{
-		x = Input.GetAxis("Horizontal");
-		z = Input.GetAxis("Vertical");
-	}
 
 	//Queues the next jump
 	void QueueJump()
@@ -156,8 +146,6 @@ public class PlayerMovementWithStrafes : MonoBehaviour
 	//Execs when the player is in the air
 	public void AirMove()
 	{
-		SetMovementDir();
-
 		wishdir = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
 		wishdir = transform.TransformDirection(wishdir);
 
@@ -166,7 +154,6 @@ public class PlayerMovementWithStrafes : MonoBehaviour
 		wishspeed *= 7f;
 
 		wishdir.Normalize();
-		moveDirectionNorm = wishdir;
 
 		// Aircontrol
 		wishspeed2 = wishspeed;
@@ -228,7 +215,6 @@ public class PlayerMovementWithStrafes : MonoBehaviour
 				playerVelocity.z = playerVelocity.z * speed + wishdir.z * k;
 
 				playerVelocity.Normalize();
-				moveDirectionNorm = playerVelocity;
 			}
 
 			playerVelocity.x *= speed;
@@ -247,13 +233,10 @@ public class PlayerMovementWithStrafes : MonoBehaviour
 			ApplyFriction(1.0f);
 		else
 			ApplyFriction(0);
-
-		SetMovementDir();
-
+		
 		wishdir = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
 		wishdir = transform.TransformDirection(wishdir);
 		wishdir.Normalize();
-		moveDirectionNorm = wishdir;
 
 		wishspeed = wishdir.magnitude;
 		wishspeed *= moveSpeed;
