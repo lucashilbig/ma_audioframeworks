@@ -1,0 +1,26 @@
+{
+    "name": "com.microsoft.projectacoustics.spatializer.unity",
+    "displayName": "Microsoft Project Acoustics Spatializer",
+    "version": "%version%",
+    "unity": "2019.4",
+    "description": "Project Acoustics Audio Spatializer",
+    "keywords": [
+      "microsoft",
+      "mixed",
+      "reality",
+      "spatial",
+      "audio",
+      "spatializer",
+      "augmented",
+      "virtual",
+      "hololens",
+      "project",
+      "acoustics"
+    ],
+    "author": "Microsoft",
+    "repository": {
+      "type": "git",
+      "url": "https://microsoft.visualstudio.com/Analog/_git/mixedreality.ProjectAcoustics-Full"
+    }
+  }
+  

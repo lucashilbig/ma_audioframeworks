@@ -19,6 +19,9 @@ public class MouseLookCam : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if(!GameLogic.IsGameFocused())
+            return;
+
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.fixedDeltaTime;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.fixedDeltaTime;
 

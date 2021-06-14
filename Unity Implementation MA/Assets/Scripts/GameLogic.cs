@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections;
+using System.Diagnostics;
 using System;
 
 public class GameLogic : MonoBehaviour
@@ -19,18 +20,22 @@ public class GameLogic : MonoBehaviour
     public Text _audioClipText;
     public Text _audioVisibleText;
     public TextMeshProUGUI _scoreTextTmp;
+    public TextMeshProUGUI _timeTextTmp;
 
-    GameObject _currAudioObj;//currently active instance of _audioPrefab
-    GameObject _currGuesserObj;//currently active instance of _guesserPrefab
-    GameObject _currLineObj;//currently active instance of _linePrefab
-    GameObject[] _debugUIObjs;
-    int _idxCurrClip;//index of the currently playing clip from _audioClips. -1 means no clip 
-    int _idxCurrPos;//index of current position from _objPositions
-    bool _enableGuessing;//if set to false, you cant spawn guess objects with left click
-    bool _guessFinished;//set to true after MakeGuess(), so we only calculate guess once
+    private GameObject _currAudioObj;//currently active instance of _audioPrefab
+    private GameObject _currGuesserObj;//currently active instance of _guesserPrefab
+    private GameObject _currLineObj;//currently active instance of _linePrefab
+    private GameObject[] _debugUIObjs;
+    private Stopwatch _stopwatch;
+    private int _idxCurrClip;//index of the currently playing clip from _audioClips. -1 means no clip 
+    private int _idxCurrPos;//index of current position from _objPositions
+    private bool _enableGuessing;//if set to false, you cant spawn guess objects with left click
+    private bool _guessFinished;//set to true after MakeGuess(), so we only calculate guess once
+    private static bool _isGameFocused = true;
+    public static bool IsGameFocused() { return _isGameFocused; }
 
     //Audio Source Object Positions for Dust2
-    Vector3[] _objPositions = {new Vector3(41.43f, 26.21f, 47.99f), new Vector3(-36.59f, 19.36f, -0.05f), new Vector3(-34.34f, 19.36f, -30.94f),//T-Spawn, Front long doors, In long doors
+    private Vector3[] _objPositions = {new Vector3(41.43f, 26.21f, 47.99f), new Vector3(-36.59f, 19.36f, -0.05f), new Vector3(-34.34f, 19.36f, -30.94f),//T-Spawn, Front long doors, In long doors
     new Vector3(-42.29f,19.76f,-68.97f), new Vector3(-85.73f,9.39f,-12.88f), new Vector3(-51.84f,19.88f,-54.09f), new Vector3(-85.12f,19.88f,-95.69f),//Long behind blue, Long deep pit, Long out doors, Middle long
     new Vector3(-104.23f,21.95f,-118.93f), new Vector3(-82.58f,22.95f,-152.46f), new Vector3(-71.62f,24.54f,-144.24f), new Vector3(-64.23f,26.53f,-177.6f),//A Car, A Ramp, A Default, A Goose
     new Vector3(-25.76f,24.14f,-157.71f), new Vector3(-22.32f,24.14f,-113.97f), new Vector3(-25.63f,17.64f,-105.63f), new Vector3(-5.90f,18.15f,-89.26f),//A Gandalf, A short peek, A short corner, A short
@@ -49,6 +54,7 @@ public class GameLogic : MonoBehaviour
         _idxCurrPos = -1;
         _enableGuessing = false;
         _guessFinished = true;
+        _stopwatch = new Stopwatch();
 
         #region UI
         if(_audioSourceVisible)
@@ -78,6 +84,25 @@ public class GameLogic : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+#if UNITY_EDITOR
+        // Handle focus changes in the editor. This isn't a problem in standalone game
+        if(Input.GetKeyDown(KeyCode.Escape))
+        {
+            _isGameFocused = false;
+            return;
+        }
+        if(!_isGameFocused)
+        {
+            // If we registered a click, the game is focused again
+            if(Input.GetMouseButtonDown(0) || Input.GetMouseButtonDown(1))
+            {
+                _isGameFocused = true;
+            }
+            // Always eat the first click, or early return (because we don't have focus)
+            return;
+        }
+#endif
+
         #region Key Callbacks
         if(Input.GetKeyDown("1"))
             NewAudioPositionRnd();
@@ -92,6 +117,10 @@ public class GameLogic : MonoBehaviour
         if(!_guessFinished && _currAudioObj != null && _currGuesserObj != null && Input.GetMouseButtonDown(1))// right/secondary click. Can only make guess if we have source and guess positions
             MakeGuess();
         #endregion
+
+        //update stopwatch text while player looks for source
+        if(_enableGuessing)
+            _timeTextTmp.text = _stopwatch.Elapsed.ToString(@"mm\:ss\.f");
     }
 
     /// <summary>
@@ -105,6 +134,10 @@ public class GameLogic : MonoBehaviour
 
         if(_currLineObj != null)
             Destroy(_currLineObj);
+        
+        //temporarily disable character controlls and start countdown and stopwatch via coroutine
+        _playerCamera.gameObject.GetComponentInParent<CharacterController>().enabled = false;
+        StartCoroutine(CountdownToStart());
 
         //Select random new position that is different from current
         int newIdx = UnityEngine.Random.Range(0, _objPositions.Length);
@@ -121,8 +154,7 @@ public class GameLogic : MonoBehaviour
         source.clip = _audioClips[_idxCurrClip];
         source.Play();
 
-        //disable score text and enable guessing
-        _scoreTextTmp.gameObject.SetActive(false);
+        //enable guessing
         _enableGuessing = true;
         _guessFinished = false;
     }
@@ -152,16 +184,18 @@ public class GameLogic : MonoBehaviour
 
         if(_audioSourceVisible)
         {
-            _currAudioObj.GetComponent<MeshRenderer>().enabled = true;
+            if(_currAudioObj != null)
+                _currAudioObj.GetComponent<MeshRenderer>().enabled = true;
             _audioVisibleText.text = "Audio Visible: On";
         }
         else
         {
-            _currAudioObj.GetComponent<MeshRenderer>().enabled = false;
+            if(_currAudioObj != null)
+                _currAudioObj.GetComponent<MeshRenderer>().enabled = false;
             _audioVisibleText.text = "Audio Visible: Off";
         }
     }
-    
+
     private void ToggleDebugUI()
     {
         _showDebugUI = (_showDebugUI) ? false : true;
@@ -183,9 +217,13 @@ public class GameLogic : MonoBehaviour
 
     private void MakeGuess()
     {
-        //TODO: Add timer from start of NewAudioPosition to makeGuess
+        //TODO: Logging der Ergebnisse für Evaluation
         _enableGuessing = false;
         _guessFinished = true;
+
+        //stop stopwatch and refresh text
+        _stopwatch.Stop();
+        _timeTextTmp.text = _stopwatch.Elapsed.ToString(@"mm\:ss\.f");
 
         //calculate distance between audio source obj and guess
         float distance = Vector3.Distance(_currAudioObj.transform.position, _currGuesserObj.transform.position);
@@ -193,7 +231,7 @@ public class GameLogic : MonoBehaviour
         //set score and make it show with pulse animation
         _scoreTextTmp.text = "Distanz" + Environment.NewLine + distance.ToString("0.0");
         _scoreTextTmp.gameObject.SetActive(true);
-        StartCoroutine(PulseTMP());
+        StartCoroutine(PulseTMP(2));
 
         //show audio source obj and draw line to guess obj
         _currAudioObj.GetComponent<MeshRenderer>().enabled = true;
@@ -207,9 +245,9 @@ public class GameLogic : MonoBehaviour
     /// Lets the score textMeshPro _scoreTextTmp pulsate via scaling
     /// </summary>
     /// <returns></returns>
-    private IEnumerator PulseTMP()
+    private IEnumerator PulseTMP(int pulses)
     {
-        for(int j = 0; j < 2; j++)//amount of pulses
+        for(int j = 0; j < pulses; j++)//amount of pulses
         {
             for(float i = 1f; i <= 1.2f; i += 0.05f)
             {
@@ -227,5 +265,27 @@ public class GameLogic : MonoBehaviour
 
             _scoreTextTmp.rectTransform.localScale = new Vector3(1f, 1f, 1f);
         }
+    }
+
+    private IEnumerator CountdownToStart()
+    {
+        _scoreTextTmp.gameObject.SetActive(true);
+        int time = 3;
+        while (time > 0)
+        {
+            _scoreTextTmp.text = "<size=+24>" + time.ToString() + "</size>";
+            StartCoroutine(PulseTMP(1));
+            yield return new WaitForSeconds(1f);
+            time--;
+        }
+
+        _scoreTextTmp.text = "<size=+24>Los!</size>";
+
+        //enable character controlls and start stopwatch
+        _playerCamera.gameObject.GetComponentInParent<CharacterController>().enabled = true;
+        _stopwatch.Restart();
+
+        yield return new WaitForSeconds(1f);
+        _scoreTextTmp.gameObject.SetActive(false);
     }
 }
