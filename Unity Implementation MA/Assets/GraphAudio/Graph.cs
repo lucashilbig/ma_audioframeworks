@@ -3,37 +3,40 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-public class Graph : ScriptableObject
+namespace GraphAudio
 {
-    [SerializeField]
-    private List<Node> nodes;
-    private List<Node> Nodes
+    public class Graph : ScriptableObject
     {
-        get
+        [SerializeField]
+        private List<Node> nodes;
+        public List<Node> Nodes
         {
-            if(nodes == null)
+            get
             {
-                nodes = new List<Node>();
+                if(nodes == null)
+                {
+                    nodes = new List<Node>();
+                }
+
+                return nodes;
             }
-
-            return nodes;
         }
-    }
 
-    public static Graph Create(string name)
-    {
-        Graph graph = CreateInstance<Graph>();
+        public static Graph Create(string name)
+        {
+            Graph graph = CreateInstance<Graph>();
 
-        string path = string.Format("Assets/GraphAudio/{0}.asset", name);
-        AssetDatabase.CreateAsset(graph, path);
+            string path = string.Format("Assets/GraphAudio/{0}.asset", name);
+            AssetDatabase.CreateAsset(graph, path);
 
-        return graph;
-    }
+            return graph;
+        }
 
-    public void AddNode(Node node)
-    {
-        Nodes.Add(node);
-        AssetDatabase.AddObjectToAsset(node, this);
-        AssetDatabase.SaveAssets();
+        public void AddNode(Node node)
+        {
+            Nodes.Add(node);
+            AssetDatabase.AddObjectToAsset(node, this);
+            AssetDatabase.SaveAssets();
+        }
     }
 }

@@ -1,9 +1,10 @@
 {
     "name": "Microsoft.Acoustics.Editor",
+    "rootNamespace": "",
     "references": [
-        "Microsoft.Acoustics"
+        "Microsoft.Acoustics",
+        "GraphAudioAssembly"
     ],
-    "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"
     ],
@@ -13,5 +14,6 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": []
+    "versionDefines": [],
+    "noEngineReferences": false
 }

@@ -32,8 +32,8 @@ MonoBehaviour:
   - Standard_H8
   - Standard_H16
   SelectedVMType: 0
-  NodeCount: 5
-  UseLowPriorityNodes: 1
+  NodeCount: 10
+  UseLowPriorityNodes: 0
   AcousticsDataFolder: Assets\AcousticsData
   DataFileBaseName: Acoustics_Dust2
   ActiveJobID: u3d210606-175220057-70ae67ff-2c2d-4668-b52f-6b7833c42daa
