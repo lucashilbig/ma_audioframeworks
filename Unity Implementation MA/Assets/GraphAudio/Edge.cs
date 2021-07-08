@@ -8,7 +8,7 @@ namespace GraphAudio
     {
         [Header("DSP-Parameters")]
         [Range(0, 255)]
-        public int _occlusion;
+        public byte _occlusion;
         public float _length;
 
         [Header("Graph related")]

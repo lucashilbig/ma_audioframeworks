@@ -7,7 +7,7 @@ namespace GraphAudio
 {
     public static class ExampleGraphUsage
     {
-        [MenuItem("Window/Graph Audio Example/Create example Graph")]
+        [MenuItem("Window/Graph Audio/Create example Graph")]
         public static void CreateGraph()
         {
             // Create graph
