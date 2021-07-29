@@ -13,6 +13,7 @@ namespace GraphAudio
 
         private List<Tuple<Vector3, string>> _nodeLocations;
         private List<Tuple<Vector3, Vector3>> _edgeLocations;
+        private List<byte> _occlusionFactors;//occlusion factor for each entrance in _edgeLocations
 
         void Start()
         {
@@ -20,6 +21,7 @@ namespace GraphAudio
             {
                 _nodeLocations = new List<Tuple<Vector3, string>>();
                 _edgeLocations = new List<Tuple<Vector3, Vector3>>();
+                _occlusionFactors = new List<byte>();
                 //Cache locations from graph nodes
                 foreach(Node node in graph.Nodes)
                 {
@@ -27,10 +29,35 @@ namespace GraphAudio
                     //Cache edges
                     foreach(Edge edge in node.Neighbors)
                     {
-                        var edgeLoc = new Tuple<Vector3, Vector3>(node._location, edge._target._location);
-                        var edgeLocReverse = new Tuple<Vector3, Vector3>(edge._target._location, node._location);
-                        if(!_edgeLocations.Contains(edgeLoc) && !_edgeLocations.Contains(edgeLocReverse))
-                            _edgeLocations.Add(edgeLoc);
+                        Vector3 a = node._location;
+                        Vector3 b = edge._target._location;
+                        //offset edge a bit because we have 2 edges from each node connection
+                        if(Math.Abs(a.z - b.z) < 0.1f)
+                        {
+                            a.z += 0.2f;
+                            b.z += 0.2f;
+                        }
+                        else
+                        {
+                            a.x += 0.2f;
+                            b.x += 0.2f;
+                        }
+                        var edgeLocReverse = new Tuple<Vector3, Vector3>(b, a);
+                        if(_edgeLocations.Contains(edgeLocReverse))
+                        {
+                            if(Math.Abs(a.z - b.z) < 0.1f)
+                            {
+                                a.z -= 0.4f;
+                                b.z -= 0.4f;
+                            }
+                            else
+                            {
+                                a.x -= 0.4f;
+                                b.x -= 0.4f;
+                            }
+                        }
+                        _edgeLocations.Add(new Tuple<Vector3, Vector3>(a, b));
+                        _occlusionFactors.Add(edge._occlusion);
                     }
                 }
             }
@@ -49,6 +76,7 @@ namespace GraphAudio
             {
                 _nodeLocations = new List<Tuple<Vector3, string>>();
                 _edgeLocations = new List<Tuple<Vector3, Vector3>>();
+                _occlusionFactors = new List<byte>();
                 //Cache locations from graph nodes
                 foreach(Node node in graph.Nodes)
                 {
@@ -56,17 +84,43 @@ namespace GraphAudio
                     //Cache edges
                     foreach(Edge edge in node.Neighbors)
                     {
-                        var edgeLoc = new Tuple<Vector3, Vector3>(node._location, edge._target._location);
-                        var edgeLocReverse = new Tuple<Vector3, Vector3>(edge._target._location, node._location);
-                        if(!_edgeLocations.Contains(edgeLoc) && !_edgeLocations.Contains(edgeLocReverse))
-                            _edgeLocations.Add(edgeLoc);
+                        //TODO: fix kanten verschiebung
+                        Vector3 a = node._location;
+                        Vector3 b = edge._target._location;
+                        //offset edge a bit because we have 2 edges from each node connection
+                        if(Math.Abs(a.z - b.z) < 0.1f)
+                        {
+                            a.z += 0.2f;
+                            b.z += 0.2f;
+                        }
+                        else
+                        {
+                            a.x += 0.2f;
+                            b.x += 0.2f;
+                        }
+                        var edgeLocReverse = new Tuple<Vector3, Vector3>(b, a);
+                        if(_edgeLocations.Contains(edgeLocReverse))
+                        {
+                            if(Math.Abs(a.z - b.z) < 0.1f)
+                            {
+                                a.z -= 0.4f;
+                                b.z -= 0.4f;
+                            }
+                            else
+                            {
+                                a.x -= 0.4f;
+                                b.x -= 0.4f;
+                            }
+                        }
+                        _edgeLocations.Add(new Tuple<Vector3, Vector3>(a, b));
+                        _occlusionFactors.Add(edge._occlusion);
                     }
                 }
             }
 
             // draw all the nodes
             Gizmos.color = Color.blue;
-            Vector3 cubeSize = new Vector3(0.4f, 0.4f, 0.4f);
+            Vector3 cubeSize = new Vector3(0.7f, 0.7f, 0.7f);
             for(int i = 0; i < _nodeLocations.Count; i++)
             {
                 Vector3 labelPos = _nodeLocations[i].Item1;
@@ -74,10 +128,14 @@ namespace GraphAudio
                 Handles.Label(labelPos, _nodeLocations[i].Item2);
                 Gizmos.DrawCube(_nodeLocations[i].Item1, cubeSize);
             }
-            // draw all the edges
-            Gizmos.color = Color.green;
+            // draw all the edges. Map occlusion factor to edge color. 255 (1.0f, not occluded) is green and 0 is red            
             for(int i = 0; i < _edgeLocations.Count; i++)
-                Gizmos.DrawLine(_edgeLocations[i].Item1, _edgeLocations[i].Item2);            
+            {
+                float occlusion = _occlusionFactors[i] / 255.0f;
+                Color color = new Color(1.0f - occlusion, occlusion, 0.0f);
+                Gizmos.color = color;
+                Gizmos.DrawLine(_edgeLocations[i].Item1, _edgeLocations[i].Item2);
+            }
 #endif
         }
 
@@ -87,9 +145,47 @@ namespace GraphAudio
             if(refresh)
             {
                 _nodeLocations = new List<Tuple<Vector3, string>>();
+                _edgeLocations = new List<Tuple<Vector3, Vector3>>();
+                _occlusionFactors = new List<byte>();
                 //Cache locations from graph nodes
                 foreach(Node node in graph.Nodes)
+                {
                     _nodeLocations.Add(new Tuple<Vector3, string>(node._location, node.name));
+                    //Cache edges
+                    foreach(Edge edge in node.Neighbors)
+                    {
+                        Vector3 a = node._location;
+                        Vector3 b = edge._target._location;
+                        //offset edge a bit because we have 2 edges from each node connection
+                        if(Math.Abs(a.z - b.z) < 0.1f)
+                        {
+                            a.z += 0.2f;
+                            b.z += 0.2f;
+                        }
+                        else
+                        {
+                            a.x += 0.2f;
+                            b.x += 0.2f;
+                        }
+                        var edgeLocReverse = new Tuple<Vector3, Vector3>(b, a);
+                        if(_edgeLocations.Contains(edgeLocReverse))
+                        {
+                            if(Math.Abs(a.z - b.z) < 0.1f)
+                            {
+                                a.z -= 0.4f;
+                                b.z -= 0.4f;
+                            }
+                            else
+                            {
+                                a.x -= 0.4f;
+                                b.x -= 0.4f;
+                            }
+                        }
+                        _edgeLocations.Add(new Tuple<Vector3, Vector3>(a, b));
+                        _occlusionFactors.Add(edge._occlusion);
+                    }
+
+                }
                 refresh = false;
             }
         }

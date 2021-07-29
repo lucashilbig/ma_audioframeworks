@@ -134,6 +134,13 @@ namespace FMODUnity
             }
         }
 
+        public void ChangeEvent(string newEvent)
+        {
+            Stop();
+            Event = newEvent;
+            Lookup();
+        }
+
         public void Play()
         {
             if (TriggerOnce && hasTriggered)

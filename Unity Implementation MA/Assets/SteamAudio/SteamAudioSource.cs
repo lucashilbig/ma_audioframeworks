@@ -75,7 +75,7 @@ namespace SteamAudio
                 Debug.LogError("Scene not found. Make sure to pre-export the scene.");
                 return;
             }
-
+            
             var environment = managerData.gameEngineState.Environment().GetEnvironment();
 
             var listener = managerData.componentCache.AudioListener();

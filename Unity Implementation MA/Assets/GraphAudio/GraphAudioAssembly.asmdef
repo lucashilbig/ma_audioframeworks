@@ -1,3 +1,16 @@
 {
-	"name": "GraphAudioAssembly"
+    "name": "GraphAudioAssembly",
+    "rootNamespace": "",
+    "references": [
+        "GUID:0ec541a288b3ae442847bcd199e76f24"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

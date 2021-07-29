@@ -67,8 +67,11 @@ public class PlayerMovementWithStrafes : MonoBehaviour
     private void Start()
     {
 		// Set audio footstep settings
-		footsteps.spatialBlend = 1.0f;
-		footsteps.loop = true;
+		if(footsteps != null)
+		{
+			footsteps.spatialBlend = 1.0f;
+			footsteps.loop = true;
+		}
 
         // This is for UI
 		lastPos = player.position;
@@ -180,7 +183,7 @@ public class PlayerMovementWithStrafes : MonoBehaviour
 		playerVelocity.y += gravity * Time.deltaTime;
 
 		//Stop Audio (footssteps) while in the air
-		if(footsteps.isPlaying)
+		if(footsteps != null && footsteps.isPlaying)
 		{
 			footsteps.Pause();
 		}
@@ -255,7 +258,7 @@ public class PlayerMovementWithStrafes : MonoBehaviour
 		// Play audio footsteps if velocity is high enough
 		if(playerVelocity.sqrMagnitude > 0.1f)
 		{
-			if(!footsteps.isPlaying)
+			if(footsteps != null && !footsteps.isPlaying)
 			{
 				footsteps.Play();
 			}

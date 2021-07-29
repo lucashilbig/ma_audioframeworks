@@ -90,5 +90,86 @@ namespace GraphAudio
 
             return neighbours.ToList();
         }
+
+        /// <summary>
+        /// calculates the occlusion value for each edge in the graph.
+        /// Calculation will be done with steam audio
+        /// </summary>
+        public void CalcOcclusionAllEdges()
+        {
+            //get steamAudio data from the scene
+            var steamAudioManager = SteamAudio.SteamAudioManager.GetSingleton();
+            if(steamAudioManager == null)
+            {
+                Debug.LogError("Phonon Manager Settings object not found in the scene! Click Window > Phonon");
+                return;
+            }
+
+            steamAudioManager.Initialize(SteamAudio.GameEngineStateInitReason.Playing);
+            SteamAudio.ManagerData managerData = steamAudioManager.ManagerData();
+
+            var sceneExported = (managerData.gameEngineState.Scene().GetScene() != IntPtr.Zero);
+            if(!sceneExported)
+            {
+                Debug.LogError("Scene not found. Make sure to pre-export the scene.");
+                return;
+            }
+
+            var environment = managerData.gameEngineState.Environment().GetEnvironment();
+
+            //Iterate over all Nodes and edges
+            Parallel.ForEach(Nodes, node =>
+            {
+                new ParallelOptions//Use 75% of available cpu resources
+                {
+                    MaxDegreeOfParallelism = Convert.ToInt32(Math.Ceiling((Environment.ProcessorCount * 0.75) * 2.0))
+                };
+
+                Parallel.ForEach(node.Neighbors, edge =>
+                {
+                    new ParallelOptions//Use 75% of available cpu resources
+                    {
+                        MaxDegreeOfParallelism = Convert.ToInt32(Math.Ceiling((Environment.ProcessorCount * 0.75) * 2.0))
+                    };
+
+                    float occlusionFactor = CalcOcclusionSteamAudio(environment, node._location, edge._target._location);
+                    edge._occlusion = Convert.ToByte(Math.Max(0, Math.Min(255, (int)Math.Floor(occlusionFactor * 256.0))));
+                });
+            });
+
+            AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>
+        /// Uses SteamAudio to calculate a occlusion factor between the listener and sound source
+        /// </summary>
+        /// <param name="environment">Pointer to the game scene environment steam audio object. SteamAudio.ManagerData.gameEngineState.Environment().GetEnvironment();</param>
+        /// <param name="listenerPos"></param>
+        /// <param name="sourcePos"></param>
+        /// <returns>Occlusion factor between 0.0f and 1.0f</returns>
+        private float CalcOcclusionSteamAudio(IntPtr environment, Vector3 listenerPos, Vector3 sourcePos)
+        {
+            var listenerPosition = SteamAudio.Common.ConvertVector(listenerPos);
+            var listenerAhead = SteamAudio.Common.ConvertVector((sourcePos - listenerPos).normalized);//listener is facing the sound source
+            var listenerUp = SteamAudio.Common.ConvertVector(Vector3.up);
+
+            var source = new SteamAudio.Source();
+            source.position = SteamAudio.Common.ConvertVector(sourcePos);
+            Vector3 sourceForward = (listenerPos - sourcePos).normalized;//source is facing the listener
+            source.ahead = SteamAudio.Common.ConvertVector(sourceForward);
+            source.up = SteamAudio.Common.ConvertVector(Vector3.up);
+            source.right = SteamAudio.Common.ConvertVector(Vector3.Cross(Vector3.up, sourceForward).normalized);
+            source.directivity = new SteamAudio.Directivity();
+            source.directivity.dipoleWeight = 0.0f;//default from SteamAudioSource.cs
+            source.directivity.dipolePower = 0.0f;//default from SteamAudioSource.cs
+            source.directivity.callback = IntPtr.Zero;
+            source.distanceAttenuationModel = new SteamAudio.DistanceAttenuationModel();
+            source.airAbsorptionModel = new SteamAudio.AirAbsorptionModel();
+
+            SteamAudio.DirectSoundPath directPath = SteamAudio.PhononCore.iplGetDirectSoundPath(environment, listenerPosition,
+                listenerAhead, listenerUp, source, 1.0f, 16, SteamAudio.OcclusionMode.OcclusionWithFrequencyIndependentTransmission, SteamAudio.OcclusionMethod.Partial);
+
+            return directPath.occlusionFactor;
+        }
     }
 }

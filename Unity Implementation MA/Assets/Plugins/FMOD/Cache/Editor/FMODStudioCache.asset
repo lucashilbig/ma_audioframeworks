@@ -1,5 +1,74 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-6089003066759590075
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/footstepsSteamAudio
+  m_EditorClassIdentifier: 
+  Path: event:/footstepsSteamAudio
+  guid: 86a0467743bedb47814527f9e4ead698
+  Banks:
+  - {fileID: 9150446931955115607}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 0
+  MaxDistance: 0
+  Length: 3203
+--- !u!114 &-2480070895784136840
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/WeAreSteamAudio
+  m_EditorClassIdentifier: 
+  Path: event:/WeAreSteamAudio
+  guid: b91147fed311524c888e5f3dd11a1f5f
+  Banks:
+  - {fileID: 9150446931955115607}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 0
+  MaxDistance: 0
+  Length: 249364
+--- !u!114 &-1925200988362363928
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/CantinaBandSteamAudio
+  m_EditorClassIdentifier: 
+  Path: event:/CantinaBandSteamAudio
+  guid: ff581636e2aa9a4aac94735c103acfee
+  Banks:
+  - {fileID: 9150446931955115607}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 0
+  MaxDistance: 0
+  Length: 36075
 --- !u!114 &-227951552328034505
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40,13 +109,41 @@ MonoBehaviour:
   - {fileID: 9150446931955115607}
   EditorEvents:
   - {fileID: -227951552328034505}
+  - {fileID: 1298339691702684621}
+  - {fileID: -6089003066759590075}
+  - {fileID: 4988624485826700010}
+  - {fileID: -2480070895784136840}
+  - {fileID: -1925200988362363928}
   EditorParameters: []
   MasterBanks:
   - {fileID: 9150446931955115607}
   StringsBanks:
   - {fileID: 1445457674666459547}
-  stringsBankWriteTime: 637613099297182640
+  stringsBankWriteTime: 637625554898609521
   cacheVersion: 6
+--- !u!114 &1298339691702684621
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/WeAre
+  m_EditorClassIdentifier: 
+  Path: event:/WeAre
+  guid: 0f979ff18fe78d469f92ab4bb952a6e7
+  Banks:
+  - {fileID: 9150446931955115607}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 100
+  Length: 249364
 --- !u!114 &1445457674666459547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -62,12 +159,58 @@ MonoBehaviour:
   Path: ../../FMOD/MA_UnityDust2/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 637613099297182640
+  lastModified: 637625554898609521
   LoadResult: 0
   FileSizes:
   - Name: Desktop
-    Value: 748
+    Value: 992
   Exists: 1
+--- !u!114 &2835635055420294232
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/CantinaSteamAudio
+  m_EditorClassIdentifier: 
+  Path: event:/CantinaSteamAudio
+  guid: ff581636e2aa9a4aac94735c103acfee
+  Banks:
+  - {fileID: 9150446931955115607}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 0
+  MaxDistance: 0
+  Length: 36075
+--- !u!114 &4988624485826700010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/footsteps
+  m_EditorClassIdentifier: 
+  Path: event:/footsteps
+  guid: 96e80c1a5e5ec046aa03d5a7db6a0be1
+  Banks:
+  - {fileID: 9150446931955115607}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 100
+  Length: 3203
 --- !u!114 &9150446931955115607
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -83,7 +226,7 @@ MonoBehaviour:
   Path: ../../FMOD/MA_UnityDust2/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 637613099297172667
+  lastModified: 637625554898589575
   LoadResult: 0
   FileSizes: []
   Exists: 1

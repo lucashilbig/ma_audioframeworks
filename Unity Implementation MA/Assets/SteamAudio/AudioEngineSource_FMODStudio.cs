@@ -28,7 +28,7 @@ namespace SteamAudio
 
         void BindToFMODStudioPlugin()
         {
-            var assemblySuffix = ",Assembly-CSharp-firstpass";
+            var assemblySuffix = ",FMODUnity";
 
             FMOD_DSP = Type.GetType("FMOD.DSP" + assemblySuffix);
             FMOD_ChannelGroup = Type.GetType("FMOD.ChannelGroup" + assemblySuffix);

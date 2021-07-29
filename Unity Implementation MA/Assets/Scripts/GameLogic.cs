@@ -5,9 +5,15 @@ using System.Collections;
 using System.Diagnostics;
 using System;
 
+public enum AudioFramework
+{
+    FMOD, SteamAudio, GraphAudio, ProjectAcoustics
+}
+
 public class GameLogic : MonoBehaviour
 {
     [Header("Settings")]
+    public AudioFramework _audioFramework;//currently used audio Framework
     public bool _audioSourceVisible;
     public bool _showDebugUI;
     public AudioClip[] _audioClips;
@@ -128,13 +134,16 @@ public class GameLogic : MonoBehaviour
     /// </summary>
     private void NewAudioPositionRnd()
     {
-        //Destroy old/Current objects
+        //Destroy and disable old/Current objects
         if(_currAudioObj != null)
             Destroy(_currAudioObj);
 
         if(_currLineObj != null)
             Destroy(_currLineObj);
-        
+
+        if(_currGuesserObj != null)
+            Destroy(_currGuesserObj);
+
         //temporarily disable character controlls and start countdown and stopwatch via coroutine
         _playerCamera.gameObject.GetComponentInParent<CharacterController>().enabled = false;
         StartCoroutine(CountdownToStart());
@@ -145,14 +154,12 @@ public class GameLogic : MonoBehaviour
             newIdx = UnityEngine.Random.Range(0, _objPositions.Length);
         _idxCurrPos = newIdx;
 
-        //instantiate new audio gameObject
+        //instantiate new audio source gameObject
         _currAudioObj = Instantiate(_audioPrefab, _objPositions[_idxCurrPos], Quaternion.identity);
         _currAudioObj.GetComponent<MeshRenderer>().enabled = _audioSourceVisible;
 
-        //set audioClip on the new gameObject
-        AudioSource source = _currAudioObj.GetComponent<AudioSource>();
-        source.clip = _audioClips[_idxCurrClip];
-        source.Play();
+        //set audioClip on the new gameObject and activate object
+        SetAudioClipOnObj(_currAudioObj, _audioClips[_idxCurrClip]);
 
         //enable guessing
         _enableGuessing = true;
@@ -168,11 +175,7 @@ public class GameLogic : MonoBehaviour
 
         //Change clip in current audio gameObject
         if(_currAudioObj != null)
-        {
-            AudioSource source = _currAudioObj.GetComponent<AudioSource>();
-            source.clip = _audioClips[_idxCurrClip];
-            source.Play();
-        }
+            SetAudioClipOnObj(_currAudioObj, _audioClips[_idxCurrClip]);
 
         //UI text
         _audioClipText.text = "Audio Clip: " + _audioClips[_idxCurrClip].name;
@@ -241,6 +244,53 @@ public class GameLogic : MonoBehaviour
         line.SetPosition(1, _currGuesserObj.transform.position);
     }
 
+    private void SetAudioClipOnObj(GameObject obj, AudioClip clip)
+    {
+        if(_audioFramework == AudioFramework.FMOD || _audioFramework == AudioFramework.GraphAudio)
+        {
+            var eventEmitter = obj.GetComponent<FMODUnity.StudioEventEmitter>();
+            eventEmitter.ChangeEvent(GetFmodEventByName(clip.name));
+            eventEmitter.Play();
+        }
+        else if(_audioFramework == AudioFramework.SteamAudio)
+        {
+            //We need to create a new gameObject instance otherwise Steam Audio will be buggy
+            if(_currAudioObj != null)
+                Destroy(_currAudioObj);
+            _currAudioObj = Instantiate(_audioPrefab, _objPositions[_idxCurrPos], Quaternion.identity);
+            _currAudioObj.GetComponent<MeshRenderer>().enabled = _audioSourceVisible;
+
+            //Set audioclip/Event
+            var eventEmitter = _currAudioObj.GetComponent<FMODUnity.StudioEventEmitter>();
+            eventEmitter.ChangeEvent(GetFmodEventByName(clip.name));
+
+            Destroy(_currAudioObj.GetComponent<SteamAudio.SteamAudioSource>()); //Steam Audio doesnt work otherwise
+            _currAudioObj.AddComponent<SteamAudio.SteamAudioSource>();
+            eventEmitter.Play();
+        }
+        else if(_audioFramework == AudioFramework.ProjectAcoustics)
+        {
+            AudioSource source = obj.GetComponent<AudioSource>();
+            source.Stop();
+            source.clip = clip;
+            source.Play();
+        }
+
+        string GetFmodEventByName(string clipName)
+        {
+            string affix = (_audioFramework == AudioFramework.SteamAudio) ? "SteamAudio" : "";
+
+            if(clipName.Contains("Cantina Band"))
+                return "event:/CantinaBand" + affix;
+            else if(clipName.Contains("We Are"))
+                return "event:/WeAre" + affix;
+            else if(clipName.Contains("footsteps"))
+                return "event:/footsteps" + affix;
+            else
+                return "event:/CantinaBand" + affix;
+        }
+    }
+
     /// <summary>
     /// Lets the score textMeshPro _scoreTextTmp pulsate via scaling
     /// </summary>
@@ -271,7 +321,7 @@ public class GameLogic : MonoBehaviour
     {
         _scoreTextTmp.gameObject.SetActive(true);
         int time = 3;
-        while (time > 0)
+        while(time > 0)
         {
             _scoreTextTmp.text = "<size=+24>" + time.ToString() + "</size>";
             StartCoroutine(PulseTMP(1));
