@@ -36,7 +36,7 @@ MonoBehaviour:
   UseLowPriorityNodes: 1
   AcousticsDataFolder: Assets\AcousticsData
   DataFileBaseName: Acoustics_Dust2
-  ActiveJobID: u3d210606-175220057-70ae67ff-2c2d-4668-b52f-6b7833c42daa
+  ActiveJobID: 
   MaterialsListElements:
   - m_name: material_0
     m_absorptivity: 0.1

@@ -19,6 +19,7 @@ public class GameLogic : MonoBehaviour
     public AudioClip[] _audioClips;
 
     [Header("References")]
+    public GameObject _graphAudioManager;
     public GameObject _audioPrefab;
     public GameObject _guesserPrefab;
     public GameObject _linePrefab;
@@ -62,6 +63,21 @@ public class GameLogic : MonoBehaviour
         _guessFinished = true;
         _stopwatch = new Stopwatch();
 
+        if(_audioFramework != AudioFramework.GraphAudio)
+            _graphAudioManager.SetActive(false);
+        else
+            _graphAudioManager.SetActive(true);
+
+    }
+
+    void Start()
+    {
+        _debugUIObjs = GameObject.FindGameObjectsWithTag("DebugUI");
+
+        if(!_showDebugUI)
+            foreach(GameObject obj in _debugUIObjs)
+                obj.SetActive(false);
+
         #region UI
         if(_audioSourceVisible)
             _audioVisibleText.text = "Audio Visible: On";
@@ -76,15 +92,6 @@ public class GameLogic : MonoBehaviour
         //Disable Score Text
         _scoreTextTmp.gameObject.SetActive(false);
         #endregion
-    }
-
-    void Start()
-    {
-        _debugUIObjs = GameObject.FindGameObjectsWithTag("DebugUI");
-
-        if(!_showDebugUI)
-            foreach(GameObject obj in _debugUIObjs)
-                obj.SetActive(false);
     }
 
     // Update is called once per frame

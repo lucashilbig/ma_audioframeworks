@@ -22,4 +22,12 @@ namespace GraphAudio
             return edge;
         }
     }
+
+    public struct EdgeDOTS
+    {
+        public float length;//represents the amount of attenuation and is the exaggerated distance between two nodes due to occlusion (Cowan)
+
+        public int FromNodeIndex;
+        public int ToNodeIndex;
+    }
 }

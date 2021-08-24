@@ -8,6 +8,9 @@ namespace GraphAudio
 {
     public class GraphNodeRenderer : MonoBehaviour
     {
+        public bool renderNodes = true;
+        public bool renderNodeNames;
+        public bool renderEdges;
         public bool refresh;
         public Graph graph;
 
@@ -63,11 +66,6 @@ namespace GraphAudio
             }
         }
 
-        void Update()
-        {
-
-        }
-
         void OnDrawGizmosSelected()
         {
 #if UNITY_EDITOR
@@ -119,22 +117,31 @@ namespace GraphAudio
             }
 
             // draw all the nodes
-            Gizmos.color = Color.blue;
-            Vector3 cubeSize = new Vector3(0.7f, 0.7f, 0.7f);
-            for(int i = 0; i < _nodeLocations.Count; i++)
+            if(renderNodes)
             {
-                Vector3 labelPos = _nodeLocations[i].Item1;
-                labelPos.y += 0.4f;
-                Handles.Label(labelPos, _nodeLocations[i].Item2);
-                Gizmos.DrawCube(_nodeLocations[i].Item1, cubeSize);
+                Gizmos.color = Color.blue;
+                Vector3 cubeSize = new Vector3(0.7f, 0.7f, 0.7f);
+                for(int i = 0; i < _nodeLocations.Count; i++)
+                {
+                    if(renderNodeNames)
+                    {
+                        Vector3 labelPos = _nodeLocations[i].Item1;
+                        labelPos.y += 0.4f;
+                        Handles.Label(labelPos, _nodeLocations[i].Item2);
+                    }
+                    Gizmos.DrawCube(_nodeLocations[i].Item1, cubeSize);
+                }
             }
-            // draw all the edges. Map occlusion factor to edge color. 255 (1.0f, not occluded) is green and 0 is red            
-            for(int i = 0; i < _edgeLocations.Count; i++)
+            // draw all the edges. Map occlusion factor to edge color. 255 (1.0f, not occluded) is green and 0 is red
+            if(renderEdges)
             {
-                float occlusion = _occlusionFactors[i] / 255.0f;
-                Color color = new Color(1.0f - occlusion, occlusion, 0.0f);
-                Gizmos.color = color;
-                Gizmos.DrawLine(_edgeLocations[i].Item1, _edgeLocations[i].Item2);
+                for(int i = 0; i < _edgeLocations.Count; i++)
+                {
+                    float occlusion = _occlusionFactors[i] / 255.0f;
+                    Color color = new Color(1.0f - occlusion, occlusion, 0.0f);
+                    Gizmos.color = color;
+                    Gizmos.DrawLine(_edgeLocations[i].Item1, _edgeLocations[i].Item2);
+                }
             }
 #endif
         }
@@ -190,18 +197,8 @@ namespace GraphAudio
             }
         }
 
-
-        [MenuItem("Window/Graph Audio/Increse Nodes Y by 1")]
-        public static void IncreaseY()
-        {
-            Graph graph = (Graph)AssetDatabase.LoadAssetAtPath("Assets/GraphAudio/GraphDust2Acoustics.asset", typeof(Graph));
-
-            foreach(Node node in graph.Nodes)
-                node._location.y += 1.0f;
-
-            AssetDatabase.SaveAssets();
-        }
     }
+
 
     public static class AcousticsProbesToGraph
     {

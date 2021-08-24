@@ -2,20 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using Unity.Mathematics;
+using Unity.Entities;
+using Unity.Collections;
 
 namespace GraphAudio
 {
     public class Node : ScriptableObject
     {
         [Header("DSP-Parameters")]
-        public float _transmission;
-        public float _wetness;
-        public float _decayTime;
-        public float _outdoorness;
-        public float _totalAttenuation; //total attenuation of current path to listener. Occlusion value and path length of last connection are factored in here
-
         public float _soundEnergy; // amount of sound energy able to reach this location from the listener
-        public Vector3 _direction; // direction from which the sound energy comes (direction towards listener)
 
         [Header("Graph related")]
         public Vector3 _location;
@@ -52,4 +48,15 @@ namespace GraphAudio
             AssetDatabase.SaveAssets();
         }
     }
+
+    public struct NodeDOTS
+    {
+        public float3 position;
+        public float3 direction;
+        public float totalAttenuation;//dijkstra path length from startNode to this node. Occlusion value and path length of last connection are factored in here
+
+        public int index;//Index of this node in GraphPathfindingDOTS.Nodes-Array
+        public int predecessorIdx;//index of the predecessor node used by dijkstra-algorithm
+    }
+
 }

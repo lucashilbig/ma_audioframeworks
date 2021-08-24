@@ -5,6 +5,9 @@ using UnityEditor;
 using System.Threading.Tasks;
 using System;
 using System.Collections.Concurrent;
+using Unity.Collections;
+using Unity.Jobs;
+using Unity.Burst;
 
 namespace GraphAudio
 {
@@ -64,7 +67,7 @@ namespace GraphAudio
             foreach(var tuple in neighbours)
                 foreach(var nd in tuple.Item2)
                     tuple.Item1.AddEdge(nd);
-            
+
         }
 
         /// <summary>
@@ -170,6 +173,86 @@ namespace GraphAudio
                 listenerAhead, listenerUp, source, 1.0f, 16, SteamAudio.OcclusionMode.OcclusionWithFrequencyIndependentTransmission, SteamAudio.OcclusionMethod.Partial);
 
             return directPath.occlusionFactor;
+        }
+
+    }
+
+    [BurstCompile]
+    public struct GraphPathfindingDOTS : IJob
+    {
+
+        public NativeArray<NodeDOTS> nodes;
+        [ReadOnly]
+        public NativeArray<EdgeDOTS> edges;
+        [ReadOnly]
+        public NativeMultiHashMap<int, int> neighboursIndices;// key is index of node, values are indices of edges from key-node
+
+        public int startNodeIdx;
+
+        //use dijkstra-algorithm with greedy approach to determin the shortest pathes from startNode to all other nodes
+        public void Execute()
+        {
+            DijkstraPathFinding();
+        }
+
+        private void DijkstraPathFinding()
+        {
+            NodeDOTS startNode = nodes[startNodeIdx];
+            startNode.totalAttenuation = 0f;
+            nodes[startNode.index] = startNode;
+
+            //create HeapMap as priority queue. We use nodes.totalAttenuation for sorting
+            NativeHeap<NodeDOTS, NodeDOTSMinComparer> priorityQueue = new NativeHeap<NodeDOTS, NodeDOTSMinComparer>(Allocator.Temp, initialCapacity: nodes.Length);
+            NativeArray<NativeHeapIndex> heapIndices = new NativeArray<NativeHeapIndex>(nodes.Length, Allocator.Temp);
+            //insert all of our nodes
+            for(int i = 0; i < nodes.Length; i++)
+                heapIndices[i] = priorityQueue.Insert(nodes[i]);
+
+            while(priorityQueue.Count > 0)
+            {
+                NodeDOTS current = priorityQueue.Pop();
+
+                //iterate this nodes edges and update neighbour nodes totalAttenuation/path length
+                foreach(var edgeIdx in neighboursIndices.GetValuesForKey(current.index))
+                {
+                    NodeDOTS target = nodes[edges[edgeIdx].ToNodeIndex];
+                    float newPathLength = current.totalAttenuation + edges[edgeIdx].length;
+                    if(newPathLength < target.totalAttenuation)
+                    {
+                        //update target node
+                        target.totalAttenuation = newPathLength;
+                        target.predecessorIdx = current.index;
+                        nodes[edges[edgeIdx].ToNodeIndex] = target;//since we have native array we need to re-assign
+
+                        //update priority queue
+                        if(priorityQueue.IsValidIndex(heapIndices[target.index]))
+                            priorityQueue.Remove(heapIndices[target.index]);
+                        heapIndices[target.index] = priorityQueue.Insert(target);
+                    }
+                }
+            }
+
+            //Dispose all native structures
+            heapIndices.Dispose();
+            priorityQueue.Dispose();
+        }
+
+    }
+
+    /// <summary>
+    /// Resets the nodes array for Dijkstra pathfinding with default values predecessorIdx = -1 and totalAttenuation = float.MaxValue
+    /// </summary>
+    [BurstCompile]
+    public struct ResetNodesArray : IJobParallelFor
+    {
+        public NativeArray<NodeDOTS> nodes;
+
+        public void Execute(int index)
+        {
+            NodeDOTS node = nodes[index];
+            node.predecessorIdx = -1;
+            node.totalAttenuation = float.MaxValue;
+            nodes[index] = node;//native array, so we have to re-assign
         }
     }
 }
