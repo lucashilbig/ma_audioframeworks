@@ -10,9 +10,6 @@ namespace GraphAudio
 {
     public class Node : ScriptableObject
     {
-        [Header("DSP-Parameters")]
-        public float _soundEnergy; // amount of sound energy able to reach this location from the listener
-
         [Header("Graph related")]
         public Vector3 _location;
         [SerializeField]
@@ -57,6 +54,20 @@ namespace GraphAudio
 
         public int index;//Index of this node in GraphPathfindingDOTS.Nodes-Array
         public int predecessorIdx;//index of the predecessor node used by dijkstra-algorithm
+
+        public override bool Equals(object obj)
+        {
+            if(!(obj is NodeDOTS))
+                return false;
+
+            NodeDOTS strct = (NodeDOTS) obj;
+            return this.position.Equals(strct.position);
+        }
+
+        public override int GetHashCode()
+        {
+            return position.GetHashCode();
+        }
     }
 
 }

@@ -8,6 +8,7 @@ using System.Collections.Concurrent;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Burst;
+using Unity.Mathematics;
 
 namespace GraphAudio
 {
@@ -135,7 +136,8 @@ namespace GraphAudio
                         MaxDegreeOfParallelism = Convert.ToInt32(Math.Ceiling((Environment.ProcessorCount * 0.75) * 2.0))
                     };
 
-                    float occlusionFactor = CalcOcclusionSteamAudio(environment, node._location, edge._target._location);
+                    float occlusionFactor = 1.0f - CalcOcclusionSteamAudio(environment, node._location, edge._target._location);//since in steamAudio 1.0f occlusion factor means no occlusion at all
+                    edge._occlusionFloat = occlusionFactor;
                     edge._occlusion = Convert.ToByte(Math.Max(0, Math.Min(255, (int)Math.Floor(occlusionFactor * 256.0))));
                 });
             });
@@ -188,6 +190,7 @@ namespace GraphAudio
         public NativeMultiHashMap<int, int> neighboursIndices;// key is index of node, values are indices of edges from key-node
 
         public int startNodeIdx;
+        public float3 listenerPos;
 
         //use dijkstra-algorithm with greedy approach to determin the shortest pathes from startNode to all other nodes
         public void Execute()
@@ -197,9 +200,17 @@ namespace GraphAudio
 
         private void DijkstraPathFinding()
         {
+            //start node and all its neighbours are connected to the listener and totalAttenuation will be calculated after equation 6.5 of cowan (p. 177)
             NodeDOTS startNode = nodes[startNodeIdx];
-            startNode.totalAttenuation = 0f;
+            startNode.totalAttenuation = math.distance(startNode.position, listenerPos);
             nodes[startNode.index] = startNode;
+
+            foreach(var edgeIdx in neighboursIndices.GetValuesForKey(startNode.index))
+            {
+                NodeDOTS target = nodes[edges[edgeIdx].ToNodeIndex];
+                target.totalAttenuation = math.distance(target.position, listenerPos);
+                nodes[edges[edgeIdx].ToNodeIndex] = target;//since we have native array we need to re-assign
+            }
 
             //create HeapMap as priority queue. We use nodes.totalAttenuation for sorting
             NativeHeap<NodeDOTS, NodeDOTSMinComparer> priorityQueue = new NativeHeap<NodeDOTS, NodeDOTSMinComparer>(Allocator.Temp, initialCapacity: nodes.Length);

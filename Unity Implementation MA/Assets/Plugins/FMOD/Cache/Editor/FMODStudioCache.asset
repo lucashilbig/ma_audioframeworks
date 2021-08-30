@@ -114,12 +114,13 @@ MonoBehaviour:
   - {fileID: 4988624485826700010}
   - {fileID: -2480070895784136840}
   - {fileID: -1925200988362363928}
+  - {fileID: 4299776533510278140}
   EditorParameters: []
   MasterBanks:
   - {fileID: 9150446931955115607}
   StringsBanks:
   - {fileID: 1445457674666459547}
-  stringsBankWriteTime: 637625554898609521
+  stringsBankWriteTime: 637655831521329877
   cacheVersion: 6
 --- !u!114 &1298339691702684621
 MonoBehaviour:
@@ -159,11 +160,11 @@ MonoBehaviour:
   Path: ../../FMOD/MA_UnityDust2/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 637625554898609521
+  lastModified: 637655831521329877
   LoadResult: 0
   FileSizes:
   - Name: Desktop
-    Value: 992
+    Value: 1034
   Exists: 1
 --- !u!114 &2835635055420294232
 MonoBehaviour:
@@ -187,6 +188,29 @@ MonoBehaviour:
   Parameters: []
   MinDistance: 0
   MaxDistance: 0
+  Length: 36075
+--- !u!114 &4299776533510278140
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/CantinaBandGraphAudio
+  m_EditorClassIdentifier: 
+  Path: event:/CantinaBandGraphAudio
+  guid: f85917105f77d240b835fe67d04a2cc6
+  Banks:
+  - {fileID: 9150446931955115607}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 0
+  Parameters: []
+  MinDistance: 1
+  MaxDistance: 100
   Length: 36075
 --- !u!114 &4988624485826700010
 MonoBehaviour:
@@ -226,7 +250,7 @@ MonoBehaviour:
   Path: ../../FMOD/MA_UnityDust2/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 637625554898589575
+  lastModified: 637655831521299959
   LoadResult: 0
   FileSizes: []
   Exists: 1

@@ -285,7 +285,11 @@ public class GameLogic : MonoBehaviour
 
         string GetFmodEventByName(string clipName)
         {
-            string affix = (_audioFramework == AudioFramework.SteamAudio) ? "SteamAudio" : "";
+            string affix = "";
+            if(_audioFramework == AudioFramework.SteamAudio)
+                affix = "SteamAudio";
+            else if(_audioFramework == AudioFramework.GraphAudio)
+                affix = "GraphAudio";
 
             if(clipName.Contains("Cantina Band"))
                 return "event:/CantinaBand" + affix;

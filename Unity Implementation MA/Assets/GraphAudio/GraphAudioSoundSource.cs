@@ -10,11 +10,13 @@ namespace GraphAudio {
         void OnEnable()
         {
             GraphAudioManager.Instance.AddSoundSource(gameObject.GetComponent<FMODUnity.StudioEventEmitter>(), true);
+            GraphNodeRenderer.Instance.AddSourceCube();
         }
 
         void OnDisable()
         {
             GraphAudioManager.Instance.AddSoundSource(gameObject.GetComponent<FMODUnity.StudioEventEmitter>(), false);
+            GraphNodeRenderer.Instance.RemoveSourceCube();
         }
     }
 }

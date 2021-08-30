@@ -8,7 +8,9 @@ namespace GraphAudio
     {
         [Header("DSP-Parameters")]
         [Range(0, 255)]
-        public byte _occlusion;
+        public byte _occlusion;//0 means path is not occluded at all
+        [Range(0.0f, 1.0f)]
+        public float _occlusionFloat;//same as _occlusion only as float 0 to 1
         public float _length;
 
         [Header("Graph related")]

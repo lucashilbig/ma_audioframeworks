@@ -6,6 +6,7 @@ using Unity.Jobs;
 using Unity.Burst;
 using Unity.Mathematics;
 using UnityEngine;
+using System.Linq;
 
 namespace GraphAudio
 {
@@ -16,13 +17,17 @@ namespace GraphAudio
 
         public static GraphAudioManager Instance { get; private set; }//Singleton
 
-        private JobHandle _jobHandle, _clearHandle;
+        private JobHandle _pathHandle, _clearHandle;
         private NativeArray<NodeDOTS> _nodesDOTS;
         private NativeArray<EdgeDOTS> _edgesDOTS;
         private NativeMultiHashMap<int, int> _neighboursIndices;
         private List<FMODUnity.StudioEventEmitter> _soundSources = new List<FMODUnity.StudioEventEmitter>();
 
         private UniformGrid _uniformGrid;
+        private Vector3 _oldListenerPos = new Vector3(0.0f, 0.0f, 0.0f);
+
+        #region Test Variables
+        #endregion
 
         private void Awake()
         {
@@ -48,51 +53,109 @@ namespace GraphAudio
         // FixedUpdate is called once per fixed time interval
         private void FixedUpdate()
         {
-            Vector3 listenerPos = _fmodAudioListener.gameObject.transform.position;
-            //native array containing the nodes close to the listener position
-            NativeArray<NodeDOTS> closeNodesListener = new NativeArray<NodeDOTS>(_uniformGrid.GetNodesAroundPosition(listenerPos), Allocator.TempJob);
-            NativeArray<int> startIndex = new NativeArray<int>(1, Allocator.TempJob);//for result of FindClosestNodeIdxJob
-            //get players nearest node as startIndex[0] via Job
-            JobHandle closestNodeHandle = new FindClosestNodeIdxJob
+            #region Listener find closest Node
+            Vector3 listenerPos = _fmodAudioListener.transform.position;
+            //only re-calculate graph if listener position has changed
+            if(Vector3.Distance(listenerPos, _oldListenerPos) > 0.1f)
             {
-                position = listenerPos,
-                nodes = closeNodesListener,
-                closestNodeIdx = startIndex,
-                closestDistance = float.MaxValue
-            }.Schedule();
+                NativeArray<float3> listenerArray = new NativeArray<float3>(1, Allocator.TempJob);
+                listenerArray[0] = listenerPos;
+                //native array containing the nodes close to the listener position
+                NativeArray<NodeDOTS> closeNodesListener = new NativeArray<NodeDOTS>(_uniformGrid.GetNodesAroundPosition(listenerPos), Allocator.TempJob);
+                NativeArray<int> resultsFCNIJob = new NativeArray<int>(_soundSources.Count, Allocator.TempJob);//for result of FindClosestNodeIdxJob
+                                                                                                               //get players/listeners nearest node as resultsFCNIJob[0] via Job
+                JobHandle closestListenerNodeHandle = new FindClosestNodeIdxJob
+                {
+                    positions = listenerArray,
+                    nodes = closeNodesListener,
+                    closestNodeIdx = resultsFCNIJob
+                }.Schedule();
+                #endregion
+                #region Sound sources find closest Node & graph pathfinding
+                //get all nodes close to all audio source positions
+                HashSet<NodeDOTS> closeNodes = new HashSet<NodeDOTS>();
+                NativeArray<float3> sourcePositions = new NativeArray<float3>(_soundSources.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+                for(int i = 0; i < _soundSources.Count; i++)
+                {
+                    sourcePositions[i] = _soundSources[i].transform.position;
+                    closeNodes.UnionWith(_uniformGrid.GetNodesAroundPosition(_soundSources[i].transform.position));
+                }
+
+                NativeArray<NodeDOTS> closeNodesSources = new NativeArray<NodeDOTS>(closeNodes.ToArray(), Allocator.TempJob);
+
+                //make sure arrays have been reseted from last frames clearJob
+                _clearHandle.Complete();
+                closestListenerNodeHandle.Complete();
+
+                //Visualize node closest to listener position
+                if(GraphNodeRenderer.Instance.renderClosestNodes)
+                    GraphNodeRenderer.Instance.SetListenerPos(_nodesDOTS[resultsFCNIJob[0]].position);
+
+                //create our pathfinding job and execute it
+                GraphPathfindingDOTS graphDOTS = new GraphPathfindingDOTS
+                {
+                    nodes = _nodesDOTS,
+                    edges = _edgesDOTS,
+                    neighboursIndices = _neighboursIndices,
+                    startNodeIdx = resultsFCNIJob[0],
+                    listenerPos = listenerPos
+                };
+                _pathHandle = graphDOTS.Schedule();
+
+                //create job to find closest nodes for each soundSource
+                JobHandle closestSourcesNodeHandle = new FindClosestNodeIdxJob
+                {
+                    positions = sourcePositions,
+                    nodes = closeNodesSources,
+                    closestNodeIdx = resultsFCNIJob
+                }.Schedule();
 
 
-            //make sure arrays have been reseted from last frames clearJob
-            _clearHandle.Complete();
-            closestNodeHandle.Complete();
+                //Dispose native arrays from listeners FindClosestNodeIdxJob
+                closeNodesListener.Dispose();
+                listenerArray.Dispose();
 
-            //create our pathfinding job and execute it
-            GraphPathfindingDOTS graphDOTS = new GraphPathfindingDOTS
-            {
-                nodes = _nodesDOTS,
-                edges = _edgesDOTS,
-                neighboursIndices = _neighboursIndices,
-                startNodeIdx = startIndex[0]
-            };
-            _jobHandle = graphDOTS.Schedule();
+                //cache new listener position
+                _oldListenerPos = listenerPos;
 
-            //TODO: Find closest node to audio source position
+                _pathHandle.Complete();
+                closestSourcesNodeHandle.Complete();
+                #endregion
+                #region FMOD play sounds
 
+                //TEST graph distance vs direct distance of listener-source
+                for(int i = 0; i < _soundSources.Count; i++)
+                {
+                    float newDirect = Vector3.Distance(_soundSources[i].transform.position, listenerPos);
+                    UnityEngine.Debug.Log("Direct -> " + newDirect + System.Environment.NewLine
+                        + "Graph -> " + _nodesDOTS[resultsFCNIJob[i]].totalAttenuation);
+                }
 
-            //Dispose native arrays from FindClosestNodeIdxJob
-            startIndex.Dispose();
-            closeNodesListener.Dispose();
-            //play sounds with fmod
-            _jobHandle.Complete();
+                
+                #endregion
+                //Visualize nodes closest to source positions
+                if(GraphNodeRenderer.Instance.renderClosestNodes)
+                {
+                    List<Vector3> positions = new List<Vector3>();
+                    for(int i = 0; i < _soundSources.Count; i++)
+                        positions.Add(_nodesDOTS[resultsFCNIJob[i]].position);
+                    GraphNodeRenderer.Instance.SetSourcePositions(positions);
+                }
 
-            //reset _nodes array for next frame
-            _clearHandle = new ResetNodesArray { nodes = _nodesDOTS }.Schedule(_nodesDOTS.Length, 1);
+                //Dispose native arrays from sound sources FindClosestNodeIdxJob
+                closeNodesSources.Dispose();
+                sourcePositions.Dispose();
+                resultsFCNIJob.Dispose();
+
+                //reset _nodes array for next frame
+                _clearHandle = new ResetNodesArray { nodes = _nodesDOTS }.Schedule(_nodesDOTS.Length, 1);
+            }
         }
 
         private void OnDisable()
         {
             //wait for jobs to finish
-            _jobHandle.Complete();
+            _pathHandle.Complete();
             _clearHandle.Complete();
 
             //dispose all native objects
@@ -155,30 +218,43 @@ namespace GraphAudio
             edgesDOTS = new NativeArray<EdgeDOTS>(edges.ToArray(), Allocator.Persistent);
         }
 
+        /// <summary>
+        /// Unity Job to find the node closest to position. Each position will have its closest node with the same Index in closestNodeIdx-array
+        /// </summary>
         [BurstCompile]
         struct FindClosestNodeIdxJob : IJob
         {
             [ReadOnly]
-            public float3 position;
+            public NativeArray<float3> positions;
             [ReadOnly]
             public NativeArray<NodeDOTS> nodes;
             [WriteOnly]
-            public NativeArray<int> closestNodeIdx;//index of the node closest to position
-            public float closestDistance;
+            public NativeArray<int> closestNodeIdx;//OUTPUT. index of the node closest to position[index]
 
             public void Execute()
             {
+                NativeArray<float> closestDistance = new NativeArray<float>(positions.Length, Allocator.Temp, NativeArrayOptions.UninitializedMemory);//use array option since we write to the whole array immendiatly without reading
+                //initialize closestDistance
+                for(int i = 0; i < closestDistance.Length; i++)
+                {
+                    closestDistance[i] = float.MaxValue;
+                }
+
+                //iterate every node in graph
                 for(int i = 0; i < nodes.Length; i++)
                 {
-                    //calc distance from node to position
-                    float distance = Mathf.Sqrt(Mathf.Pow(position.x - nodes[i].position.x, 2) + Mathf.Pow(position.y - nodes[i].position.y, 2)
-                        + Mathf.Pow(position.z - nodes[i].position.z, 2));
-                    if(distance < closestDistance)
+                    for(int j = 0; j < closestDistance.Length; j++)
                     {
-                        closestNodeIdx[0] = nodes[i].index;
-                        closestDistance = distance;
+                        //calc distance from node to position
+                        float distance = math.distance(nodes[i].position, positions[j]);
+                        if(distance < closestDistance[j])
+                        {
+                            closestNodeIdx[j] = nodes[i].index;
+                            closestDistance[j] = distance;
+                        }
                     }
                 }
+                closestDistance.Dispose();
             }
         }
     }
