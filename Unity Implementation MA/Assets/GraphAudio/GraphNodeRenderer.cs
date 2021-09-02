@@ -17,7 +17,7 @@ namespace GraphAudio
 
         [Header("Runtime Render Options")]
         public bool renderClosestNodes;//closest node to listener & sound source positions will be rendered
-        public bool renderShortestPathes;
+        public bool renderShortestPaths;
 
         public static GraphNodeRenderer Instance { get; private set; }//Singleton
 
@@ -27,8 +27,9 @@ namespace GraphAudio
         private List<byte> _occlusionFactors;//occlusion factor for each entrance in _edgeLocations
 
         //runtime stuff
-        private List<GameObject> Cubes_Source = new List<GameObject>();
-        private GameObject Cube_Listener;
+        private readonly List<GameObject> _pathLines = new List<GameObject>();
+        private readonly List<GameObject> _cubesSource = new List<GameObject>();
+        private GameObject _cubeListener;
 
         private void Awake()
         {
@@ -38,11 +39,12 @@ namespace GraphAudio
         void Start()
         {
             //runtime stuff. Add cube for listener. Sound sources will be added with a call in GraphAudioSoundSource.cs
-            Cube_Listener = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            Cube_Listener.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-            Cube_Listener.GetComponent<BoxCollider>().enabled = false;
-            Cube_Listener.GetComponent<MeshRenderer>().material.color = Color.blue;
-            Cube_Listener.SetActive(renderClosestNodes);
+            _cubeListener = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _cubeListener.transform.SetParent(transform);
+            _cubeListener.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+            _cubeListener.GetComponent<BoxCollider>().enabled = false;
+            _cubeListener.GetComponent<MeshRenderer>().material.color = Color.blue;
+            _cubeListener.SetActive(renderClosestNodes);
         }
 
         void OnDrawGizmosSelected()
@@ -133,10 +135,9 @@ namespace GraphAudio
         {
             if(Application.isPlaying)
             {
-                Cubes_Source.ForEach(x => x.SetActive(renderClosestNodes));
-                Cube_Listener?.SetActive(renderClosestNodes);
-
-                graph.CalcOcclusionAllEdges();
+                _cubesSource.ForEach(x => x.SetActive(renderClosestNodes));
+                _pathLines.ForEach(x => x.SetActive(renderShortestPaths));
+                _cubeListener?.SetActive(renderClosestNodes);
             }
 
             //Re-cache graph nodes
@@ -188,35 +189,91 @@ namespace GraphAudio
             }
         }
 
-        public void VisualizeShortestPath(GraphPathfindingDOTS graph)
+        public void VisualizeShortestPath(GraphPathfindingDOTS graph, List<int> soundSourceIndices, Vector3 listenerPos)
         {
+            if(soundSourceIndices.Count != _pathLines.Count)
+                return;
 
+            List<Mesh> meshes = new List<Mesh>();
+
+            for(int i = 0; i < soundSourceIndices.Count; i++)
+            {
+                List<Vector3> positions = new List<Vector3>();
+                List<int> indices = new List<int>();
+                int index = 1;
+                int predecessorIdx = graph.nodes[soundSourceIndices[i]].predecessorIdx;
+
+                //Add start node (sound source)
+                positions.Add(graph.nodes[soundSourceIndices[i]].position);
+                indices.Add(0);
+
+                //iterate through graph on shortest path
+                while(predecessorIdx != -1)
+                {
+                    positions.Add(graph.nodes[predecessorIdx].position);
+                    indices.Add(index);
+                    predecessorIdx = graph.nodes[predecessorIdx].predecessorIdx;
+                    index++;
+                }
+                //add listener position as last vertex since we go from source to listener
+                positions.Add(listenerPos);
+                indices.Add(index);
+
+                Mesh mesh = new Mesh
+                {
+                    name = "LineMesh" + i,
+                    vertices = positions.ToArray()
+                };
+                mesh.SetIndices(indices.ToArray(), MeshTopology.LineStrip, 0);
+                meshes.Add(mesh);
+            }
+
+
+            //set lineRenderer GameObjects
+            for(int i = 0; i < _pathLines.Count; i++)
+                _pathLines[i].GetComponent<MeshFilter>().mesh = meshes[i];
         }
 
-        public void SetListenerPos(Vector3 pos) => Cube_Listener.transform.position = pos;
+        public void SetListenerPos(Vector3 pos) => _cubeListener.transform.position = pos;
         public void SetSourcePositions(List<Vector3> positions)
         {
-            for(int i = 0; i < Cubes_Source.Count; i++)
-                Cubes_Source[i].transform.position = positions[i];
+            for(int i = 0; i < _cubesSource.Count; i++)
+                _cubesSource[i].transform.position = positions[i];
         }
 
         public void AddSourceCube()
         {
-            var new_cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            new_cube.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-            new_cube.GetComponent<BoxCollider>().enabled = false;
-            new_cube.GetComponent<MeshRenderer>().material.color = Color.red;
-            new_cube.SetActive(renderClosestNodes);
-            Cubes_Source.Add(new_cube);
+            var newCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            newCube.transform.SetParent(transform);
+            newCube.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+            newCube.GetComponent<BoxCollider>().enabled = false;
+            newCube.GetComponent<MeshRenderer>().material.color = Color.red;
+            newCube.SetActive(renderClosestNodes);
+            _cubesSource.Add(newCube);
+
+            //also add a lineRenderer for this source
+            GameObject lineObj = new GameObject("Line" + _pathLines.Count);
+            lineObj.transform.SetParent(transform);
+            lineObj.AddComponent<MeshFilter>();
+            MeshRenderer renderer = lineObj.AddComponent<MeshRenderer>();
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            lineObj.SetActive(renderShortestPaths);
+            _pathLines.Add(lineObj);
         }
 
         public void RemoveSourceCube()
         {
-            if(Cubes_Source.Count > 0)
+            if(_cubesSource.Count > 0)
             {
-                GameObject cube = Cubes_Source[0];
-                Cubes_Source.RemoveAt(0);
+                GameObject cube = _cubesSource[0];
+                _cubesSource.RemoveAt(0);
                 Destroy(cube);
+
+                //also remove a lineRendererObj
+                GameObject renderer = _pathLines[0];
+                _pathLines.RemoveAt(0);
+                Destroy(renderer);
             }
         }
 

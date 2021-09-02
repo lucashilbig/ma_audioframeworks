@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 1644701176525643808}
   - component: {fileID: 5094951175415751899}
   - component: {fileID: 1476812700539597673}
+  - component: {fileID: 8894883945388644953}
   m_Layer: 0
   m_Name: Pulsating Audio Sphere
   m_TagString: Untagged
@@ -165,3 +166,15 @@ MonoBehaviour:
   _band: 4
   _scaleMultiplier: 2
   _scalingRate: 10
+--- !u!114 &8894883945388644953
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6167083184908972671}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f0499511e6b69fc45bbdda8a0a25429a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

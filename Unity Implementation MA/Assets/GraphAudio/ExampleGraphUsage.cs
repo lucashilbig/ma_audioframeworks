@@ -30,5 +30,12 @@ namespace GraphAudio
             nodeC.AddEdge(nodeA); //Edge from Node C to Node A
 
         }
+
+        [MenuItem("Window/Graph Audio/SaveFMOD")]
+        public static void SaveFMOD()
+        {
+            AssetDatabase.ForceReserializeAssets(new List<string>() { "Assets/Plugins/FMOD/Resources/FMODStudioSettings.asset" });
+            AssetDatabase.SaveAssets();
+        }
     }
 }

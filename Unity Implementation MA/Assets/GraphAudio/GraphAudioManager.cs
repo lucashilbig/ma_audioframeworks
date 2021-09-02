@@ -7,6 +7,8 @@ using Unity.Burst;
 using Unity.Mathematics;
 using UnityEngine;
 using System.Linq;
+using FMOD;
+using FMOD.Studio;
 
 namespace GraphAudio
 {
@@ -21,13 +23,11 @@ namespace GraphAudio
         private NativeArray<NodeDOTS> _nodesDOTS;
         private NativeArray<EdgeDOTS> _edgesDOTS;
         private NativeMultiHashMap<int, int> _neighboursIndices;
-        private List<FMODUnity.StudioEventEmitter> _soundSources = new List<FMODUnity.StudioEventEmitter>();
+        private readonly List<FMODUnity.StudioEventEmitter> _soundSources = new List<FMODUnity.StudioEventEmitter>();
 
         private UniformGrid _uniformGrid;
         private Vector3 _oldListenerPos = new Vector3(0.0f, 0.0f, 0.0f);
 
-        #region Test Variables
-        #endregion
 
         private void Awake()
         {
@@ -53,17 +53,18 @@ namespace GraphAudio
         // FixedUpdate is called once per fixed time interval
         private void FixedUpdate()
         {
-            #region Listener find closest Node
             Vector3 listenerPos = _fmodAudioListener.transform.position;
             //only re-calculate graph if listener position has changed
             if(Vector3.Distance(listenerPos, _oldListenerPos) > 0.1f)
             {
+                #region Listener find closest Node
                 NativeArray<float3> listenerArray = new NativeArray<float3>(1, Allocator.TempJob);
                 listenerArray[0] = listenerPos;
                 //native array containing the nodes close to the listener position
                 NativeArray<NodeDOTS> closeNodesListener = new NativeArray<NodeDOTS>(_uniformGrid.GetNodesAroundPosition(listenerPos), Allocator.TempJob);
                 NativeArray<int> resultsFCNIJob = new NativeArray<int>(_soundSources.Count, Allocator.TempJob);//for result of FindClosestNodeIdxJob
-                                                                                                               //get players/listeners nearest node as resultsFCNIJob[0] via Job
+                
+                //get players/listeners nearest node as resultsFCNIJob[0] via Job
                 JobHandle closestListenerNodeHandle = new FindClosestNodeIdxJob
                 {
                     positions = listenerArray,
@@ -122,16 +123,12 @@ namespace GraphAudio
                 closestSourcesNodeHandle.Complete();
                 #endregion
                 #region FMOD play sounds
-
-                //TEST graph distance vs direct distance of listener-source
+                //Set custom fmod parameters for each source
                 for(int i = 0; i < _soundSources.Count; i++)
                 {
-                    float newDirect = Vector3.Distance(_soundSources[i].transform.position, listenerPos);
-                    UnityEngine.Debug.Log("Direct -> " + newDirect + System.Environment.NewLine
-                        + "Graph -> " + _nodesDOTS[resultsFCNIJob[i]].totalAttenuation);
+                    _soundSources[i].SetParameter("GraphDistance", graphDOTS.nodes[resultsFCNIJob[i]].totalAttenuation);
                 }
 
-                
                 #endregion
                 //Visualize nodes closest to source positions
                 if(GraphNodeRenderer.Instance.renderClosestNodes)
@@ -142,6 +139,14 @@ namespace GraphAudio
                     GraphNodeRenderer.Instance.SetSourcePositions(positions);
                 }
 
+                //Visualize shortest path found by dijkstra
+                if(GraphNodeRenderer.Instance.renderShortestPaths)
+                {
+                    List<int> list = new List<int>();
+                    foreach (var i in resultsFCNIJob) list.Add(i);
+                    GraphNodeRenderer.Instance.VisualizeShortestPath(graphDOTS, list, listenerPos);
+                }
+
                 //Dispose native arrays from sound sources FindClosestNodeIdxJob
                 closeNodesSources.Dispose();
                 sourcePositions.Dispose();
@@ -149,6 +154,42 @@ namespace GraphAudio
 
                 //reset _nodes array for next frame
                 _clearHandle = new ResetNodesArray { nodes = _nodesDOTS }.Schedule(_nodesDOTS.Length, 1);
+            }
+        }
+
+        private void GetSteamAudioDSP()
+        {
+            ChannelGroup group;
+            _soundSources[0].EventInstance.getChannelGroup(out @group);
+            int numdsps;
+            @group.getNumDSPs(out numdsps);
+            List<string> dspNames = new List<string>();
+            DSP spatializer = default;
+            for (int i = 0; i < numdsps; i++)
+            {
+                DSP dsp;
+                @group.getDSP(i, out dsp);
+                string name;
+                uint version;
+                int a, b, c;
+                dsp.getInfo(out name, out version, out a, out b, out c);
+                dspNames.Add(name);
+                if (name.Equals("Steam Audio Spatializer"))
+                    spatializer = dsp;
+            }
+
+            List<string> parNames = new List<string>();
+            if (!spatializer.Equals(default(DSP)))
+            {
+                int numPar;
+                spatializer.getNumParameters(out numPar);
+                for (int i = 0; i < numPar; i++)
+                {
+                    DSP_PARAMETER_DESC desc;
+                    var res = spatializer.getParameterInfo(i, out desc);
+                    if (res == RESULT.OK)
+                        parNames.Add(desc.description);
+                }
             }
         }
 

@@ -1072,7 +1072,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1644701176525643808, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
       propertyPath: Event
-      value: event:/CantinaBand
+      value: event:/CantinaBandGraphAudio
       objectReference: {fileID: 0}
     - target: {fileID: 1644701176525643808, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
       propertyPath: PlayEvent
@@ -1080,11 +1080,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1644701176525643808, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
       propertyPath: OverrideMaxDistance
-      value: 100
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1644701176525643808, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
       propertyPath: OverrideMinDistance
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5094951175415751899, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
       propertyPath: bakedStatsFoldout
@@ -1383,23 +1383,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 11a4bec95c99d1a45b0e3a9aaa58c86b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!1 &485920010 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6167083184908972671, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
-  m_PrefabInstance: {fileID: 216138908}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &485920011
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 485920010}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f0499511e6b69fc45bbdda8a0a25429a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &524139091
@@ -3010,8 +2993,8 @@ MonoBehaviour:
   renderEdgesGizmo: 1
   refresh: 0
   graph: {fileID: 11400000, guid: 14046eaa5ee4fe14894b822883f0854f, type: 2}
-  renderClosestNodes: 1
-  renderShortestPathes: 0
+  renderClosestNodes: 0
+  renderShortestPaths: 0
 --- !u!1 &1451542483 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -2322200047090122600, guid: e6e440edd839c3c41a339983482e0104, type: 3}

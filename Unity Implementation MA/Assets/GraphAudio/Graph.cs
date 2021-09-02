@@ -142,6 +142,8 @@ namespace GraphAudio
                 });
             });
 
+            if(!Application.isPlaying)
+                AssetDatabase.ForceReserializeAssets(new List<string>() { "Assets/GraphAudio/GraphDust2Acoustics.asset" });
             AssetDatabase.SaveAssets();
         }
 

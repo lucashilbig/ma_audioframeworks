@@ -100,7 +100,9 @@ MonoBehaviour:
   BankDirectorySettings: []
   VirtualChannelSettings: []
   RealChannelSettings: []
-  Plugins: []
+  Plugins:
+  - phonon_fmod
+  - resonanceaudio
   MasterBanks:
   - Master
   Banks: []
@@ -435,7 +437,9 @@ MonoBehaviour:
       Value: 0
       HasValue: 0
     Plugins:
-      Value: []
+      Value:
+      - phonon_fmod
+      - resonanceaudio
       HasValue: 1
     StaticPlugins:
       Value: []

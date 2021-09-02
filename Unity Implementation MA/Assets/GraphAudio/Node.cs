@@ -51,7 +51,7 @@ namespace GraphAudio
         public float3 position;
         public float3 direction;
         public float totalAttenuation;//dijkstra path length from startNode to this node. Occlusion value and path length of last connection are factored in here
-
+        
         public int index;//Index of this node in GraphPathfindingDOTS.Nodes-Array
         public int predecessorIdx;//index of the predecessor node used by dijkstra-algorithm
 

@@ -12,10 +12,10 @@ namespace GraphAudio
 
         private Bounds _bounds;//AA-Bounding-Box of the grid
 
-        private Vector3 _gridSize; // In X-,Y-,Z-Dimension.
-        private Vector3 _cellSize; // In X-,Y-,Z-Dimension
-        private Vector3 _gridOrigin;
-        private int _numGridCells; // total number of cells in the grid
+        private readonly Vector3 _gridSize; // In X-,Y-,Z-Dimension.
+        private readonly Vector3 _cellSize; // In X-,Y-,Z-Dimension
+        private readonly Vector3 _gridOrigin;
+        private readonly int _numGridCells; // total number of cells in the grid
 
         public UniformGrid(in NativeArray<NodeDOTS> nodes, Bounds gridBounds, Vector3 gridSize)
         {
@@ -57,16 +57,16 @@ namespace GraphAudio
 
             foreach(var node in nodes)
             {
-                //get the adress for the cell in the grid where our current node is located
-                uint cellAdress = CalcGridAddress(CalcGridPos(node.position));
+                //get the address for the cell in the grid where our current node is located
+                uint cellAddress = CalcGridAddress(CalcGridPos(node.position));
 
                 //Add node to the uniform grid
-                if(tempDic.ContainsKey(cellAdress))
-                    tempDic[cellAdress].Add(node);
+                if(tempDic.ContainsKey(cellAddress))
+                    tempDic[cellAddress].Add(node);
                 else
                 {
                     var newList = new List<NodeDOTS>() { node };
-                    tempDic.Add(cellAdress, newList);
+                    tempDic.Add(cellAddress, newList);
                 }
             }
 
@@ -108,7 +108,7 @@ namespace GraphAudio
         }
 
         /// <summary>
-        /// Calculates the grid adresses of the cells surrounding "cellAddress"
+        /// Calculates the grid addresses of the cells surrounding "cellAddress"
         /// NOTE: Edge-Case detection is not needed, because we test the nodes inside the cells for distance separatly
         /// </summary>
         /// <param name="cellAddress">Address of cell in grid</param>
