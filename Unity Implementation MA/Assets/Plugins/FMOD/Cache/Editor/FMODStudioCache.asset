@@ -39,6 +39,26 @@ MonoBehaviour:
   ID:
     data1: 0
     data2: 0
+  Exists: 0
+--- !u!114 &-7732482167359981018
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/CantinaBandGraphAudioResonance/GraphDistance
+  m_EditorClassIdentifier: 
+  Name: GraphDistance
+  Min: 0
+  Max: 150
+  Default: 0
+  ID:
+    data1: 0
+    data2: 0
   Exists: 1
 --- !u!114 &-7703962037817903666
 MonoBehaviour:
@@ -80,7 +100,7 @@ MonoBehaviour:
   Is3D: 1
   IsOneShot: 0
   Parameters:
-  - {fileID: -7943772983165001704}
+  - {fileID: -7732482167359981018}
   MinDistance: 0
   MaxDistance: 0
   Length: 36075
@@ -107,6 +127,26 @@ MonoBehaviour:
   MinDistance: 0
   MaxDistance: 0
   Length: 3203
+--- !u!114 &-3647600732325322135
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/CantinaBandGraphAudio/GraphDistance
+  m_EditorClassIdentifier: 
+  Name: GraphDistance
+  Min: 0
+  Max: 150
+  Default: 0
+  ID:
+    data1: 0
+    data2: 0
+  Exists: 1
 --- !u!114 &-2480070895784136840
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -153,6 +193,26 @@ MonoBehaviour:
   MinDistance: 0
   MaxDistance: 0
   Length: 36075
+--- !u!114 &-1905099377983302437
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/CantinaBandGraphAudio/GraphDistance
+  m_EditorClassIdentifier: 
+  Name: GraphDistance
+  Min: 0
+  Max: 150
+  Default: 0
+  ID:
+    data1: 0
+    data2: 0
+  Exists: 1
 --- !u!114 &-1585500601331984933
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -265,7 +325,7 @@ MonoBehaviour:
   - {fileID: 9150446931955115607}
   StringsBanks:
   - {fileID: 1445457674666459547}
-  stringsBankWriteTime: 637661189657462483
+  stringsBankWriteTime: 637663002805325561
   cacheVersion: 6
 --- !u!114 &246308326604506621
 MonoBehaviour:
@@ -325,11 +385,31 @@ MonoBehaviour:
   Path: ../../FMOD/MA_UnityDust2/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 637661189657462483
+  lastModified: 637663002805325561
   LoadResult: 0
   FileSizes:
   - Name: Desktop
     Value: 1140
+  Exists: 1
+--- !u!114 &1833344609093249168
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/CantinaBandGraphAudioResonance/GraphDistance
+  m_EditorClassIdentifier: 
+  Name: GraphDistance
+  Min: 0
+  Max: 150
+  Default: 0
+  ID:
+    data1: 0
+    data2: 0
   Exists: 1
 --- !u!114 &2835635055420294232
 MonoBehaviour:
@@ -454,7 +534,7 @@ MonoBehaviour:
   Is3D: 0
   IsOneShot: 0
   Parameters:
-  - {fileID: 5312814546335394148}
+  - {fileID: -3647600732325322135}
   MinDistance: 0
   MaxDistance: 0
   Length: 36075
@@ -500,7 +580,7 @@ MonoBehaviour:
   ID:
     data1: 0
     data2: 0
-  Exists: 1
+  Exists: 0
 --- !u!114 &6945157475957009088
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -536,7 +616,7 @@ MonoBehaviour:
   Path: ../../FMOD/MA_UnityDust2/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 637661189657432567
+  lastModified: 637663002805285805
   LoadResult: 0
   FileSizes: []
   Exists: 1

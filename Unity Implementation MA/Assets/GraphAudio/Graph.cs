@@ -5,10 +5,13 @@ using UnityEditor;
 using System.Threading.Tasks;
 using System;
 using System.Collections.Concurrent;
+using System.Threading;
+using SteamAudio;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Burst;
 using Unity.Mathematics;
+using Vector3 = UnityEngine.Vector3;
 
 namespace GraphAudio
 {
@@ -101,26 +104,17 @@ namespace GraphAudio
         /// </summary>
         public void CalcOcclusionAllEdges()
         {
-            //get steamAudio data from the scene
-            var steamAudioManager = SteamAudio.SteamAudioManager.GetSingleton();
-            if(steamAudioManager == null)
-            {
-                Debug.LogError("Phonon Manager Settings object not found in the scene! Click Window > Phonon");
-                return;
-            }
-
-            steamAudioManager.Initialize(SteamAudio.GameEngineStateInitReason.Playing);
-            SteamAudio.ManagerData managerData = steamAudioManager.ManagerData();
-
-            var sceneExported = (managerData.gameEngineState.Scene().GetScene() != IntPtr.Zero);
-            if(!sceneExported)
-            {
-                Debug.LogError("Scene not found. Make sure to pre-export the scene.");
-                return;
-            }
-
-            var environment = managerData.gameEngineState.Environment().GetEnvironment();
-
+            //create new steamAudio simulator and load scene into it
+            Context context = new Context();
+            var settings = SteamAudioManager.GetSimulationSettings(false);
+            settings.flags = SimulationFlags.Direct;
+            var simulator = new Simulator(context, settings);
+            var scene = new Scene(context, SteamAudio.SceneType.Default, null, null, 
+                SteamAudioManager.ClosestHit, SteamAudioManager.AnyHit);
+            scene.Commit();
+            simulator.SetScene(scene);
+            simulator.Commit();
+            
             //Iterate over all Nodes and edges
             Parallel.ForEach(Nodes, node =>
             {
@@ -136,7 +130,7 @@ namespace GraphAudio
                         MaxDegreeOfParallelism = Convert.ToInt32(Math.Ceiling((Environment.ProcessorCount * 0.75) * 2.0))
                     };
 
-                    float occlusionFactor = 1.0f - CalcOcclusionSteamAudio(environment, node._location, edge._target._location);//since in steamAudio 1.0f occlusion factor means no occlusion at all
+                    float occlusionFactor = 1.0f - CalcOcclusionSteamAudio(simulator, node._location, edge._target._location);//since in steamAudio 1.0f occlusion factor means no occlusion at all
                     edge._occlusionFloat = occlusionFactor;
                     edge._occlusion = Convert.ToByte(Math.Max(0, Math.Min(255, (int)Math.Floor(occlusionFactor * 256.0))));
                 });
@@ -150,33 +144,73 @@ namespace GraphAudio
         /// <summary>
         /// Uses SteamAudio to calculate a occlusion factor between the listener and sound source
         /// </summary>
-        /// <param name="environment">Pointer to the game scene environment steam audio object. SteamAudio.ManagerData.gameEngineState.Environment().GetEnvironment();</param>
+        /// <param name="simulator">Simulator to use for steamAudio calculations</param>
         /// <param name="listenerPos"></param>
         /// <param name="sourcePos"></param>
         /// <returns>Occlusion factor between 0.0f and 1.0f</returns>
-        private float CalcOcclusionSteamAudio(IntPtr environment, Vector3 listenerPos, Vector3 sourcePos)
+        private float CalcOcclusionSteamAudio(Simulator simulator, Vector3 listenerPos, Vector3 sourcePos)
         {
-            var listenerPosition = SteamAudio.Common.ConvertVector(listenerPos);
-            var listenerAhead = SteamAudio.Common.ConvertVector((sourcePos - listenerPos).normalized);//listener is facing the sound source
-            var listenerUp = SteamAudio.Common.ConvertVector(Vector3.up);
+            //set listener pos and settings for simulation
+            var sharedInputs = new SimulationSharedInputs { };
+            sharedInputs.listener.origin = Common.ConvertVector(listenerPos);
+            var listenerForward = (sourcePos - listenerPos).normalized;
+            sharedInputs.listener.ahead = Common.ConvertVector(listenerForward);
+            sharedInputs.listener.up = Common.ConvertVector(Vector3.up);
+            sharedInputs.listener.right = Common.ConvertVector(Vector3.Cross(Vector3.up, listenerForward).normalized);
+            sharedInputs.numRays = SteamAudioSettings.Singleton.realTimeRays;
+            sharedInputs.numBounces = SteamAudioSettings.Singleton.realTimeBounces;
+            sharedInputs.duration = SteamAudioSettings.Singleton.realTimeDuration;
+            sharedInputs.order = SteamAudioSettings.Singleton.realTimeAmbisonicOrder;
+            sharedInputs.irradianceMinDistance = SteamAudioSettings.Singleton.realTimeIrradianceMinDistance;
+            simulator.SetSharedInputs(SimulationFlags.Direct, sharedInputs);
 
-            var source = new SteamAudio.Source();
-            source.position = SteamAudio.Common.ConvertVector(sourcePos);
+            //set source pos and settings
+            var settings = SteamAudioManager.GetSimulationSettings(false);
+            settings.flags = SimulationFlags.Direct;
+            var source = new Source(simulator, settings);
+            source.AddToSimulator(simulator);
+            
+            var inputs = new SimulationInputs { };
+            inputs.source.origin = Common.ConvertVector(sourcePos);
             Vector3 sourceForward = (listenerPos - sourcePos).normalized;//source is facing the listener
-            source.ahead = SteamAudio.Common.ConvertVector(sourceForward);
-            source.up = SteamAudio.Common.ConvertVector(Vector3.up);
-            source.right = SteamAudio.Common.ConvertVector(Vector3.Cross(Vector3.up, sourceForward).normalized);
-            source.directivity = new SteamAudio.Directivity();
-            source.directivity.dipoleWeight = 0.0f;//default from SteamAudioSource.cs
-            source.directivity.dipolePower = 0.0f;//default from SteamAudioSource.cs
-            source.directivity.callback = IntPtr.Zero;
-            source.distanceAttenuationModel = new SteamAudio.DistanceAttenuationModel();
-            source.airAbsorptionModel = new SteamAudio.AirAbsorptionModel();
+            inputs.source.ahead = Common.ConvertVector(sourceForward);
+            inputs.source.up = Common.ConvertVector(Vector3.up);
+            inputs.source.right = Common.ConvertVector(Vector3.Cross(Vector3.up, sourceForward).normalized);
+            inputs.distanceAttenuationModel.type = DistanceAttenuationModelType.Default;
+            inputs.airAbsorptionModel.type = AirAbsorptionModelType.Default;
+            inputs.directivity.dipoleWeight = 0.0f;
+            inputs.directivity.dipolePower = 0.0f;
+            inputs.occlusionType = OcclusionType.Raycast;
+            inputs.occlusionRadius = 1.0f;
+            inputs.numOcclusionSamples = 16;
+            inputs.reverbScaleLow = 1.0f;
+            inputs.reverbScaleMid = 1.0f;
+            inputs.reverbScaleHigh = 1.0f;
+            inputs.hybridReverbTransitionTime = SteamAudioSettings.Singleton.hybridReverbTransitionTime;
+            inputs.hybridReverbOverlapPercent = SteamAudioSettings.Singleton.hybridReverbOverlapPercent / 100.0f;
+            inputs.baked = Bool.False;
+            inputs.pathingProbes = IntPtr.Zero;
+            inputs.visRadius = SteamAudioSettings.Singleton.bakingVisibilityRadius;
+            inputs.visThreshold = SteamAudioSettings.Singleton.bakingVisibilityThreshold;
+            inputs.visRange = SteamAudioSettings.Singleton.bakingVisibilityRange;
+            inputs.pathingOrder = SteamAudioSettings.Singleton.bakingAmbisonicOrder;
+            inputs.enableValidation = Bool.False;
+            inputs.findAlternatePaths = Bool.False;
+            inputs.flags = SimulationFlags.Direct;
+            inputs.directFlags = 0;
+            inputs.directFlags = inputs.directFlags | DirectSimulationFlags.Occlusion;
+            source.SetInputs(SimulationFlags.Direct, inputs);
+            
+            //run occlusion calculations
+            simulator.RunDirect();
+            
+            //get outputs from simulation
+            var outputs = source.GetOutputs(SimulationFlags.Direct);
+            var occlusionValue = outputs.direct.occlusion;
+            //remove from simulation after we finished
+            source.RemoveFromSimulator(simulator);
 
-            SteamAudio.DirectSoundPath directPath = SteamAudio.PhononCore.iplGetDirectSoundPath(environment, listenerPosition,
-                listenerAhead, listenerUp, source, 1.0f, 16, SteamAudio.OcclusionMode.OcclusionWithFrequencyIndependentTransmission, SteamAudio.OcclusionMethod.Partial);
-
-            return directPath.occlusionFactor;
+            return occlusionValue;
         }
 
     }

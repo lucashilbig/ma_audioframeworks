@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 6167083184908972667}
   - component: {fileID: 6167083184908972668}
   - component: {fileID: 1644701176525643808}
-  - component: {fileID: 5094951175415751899}
+  - component: {fileID: 3698282024825531808}
   - component: {fileID: 1476812700539597673}
   - component: {fileID: 8894883945388644953}
   m_Layer: 0
@@ -108,7 +108,7 @@ MonoBehaviour:
   OverrideAttenuation: 0
   OverrideMinDistance: 0
   OverrideMaxDistance: 0
---- !u!114 &5094951175415751899
+--- !u!114 &3698282024825531808
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -117,40 +117,76 @@ MonoBehaviour:
   m_GameObject: {fileID: 6167083184908972671}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8cc64aca77a4bc84f9a15ccd92d26878, type: 3}
+  m_Script: {fileID: 11500000, guid: 59c3684b22f00604a97bb68037fcf4cd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  directBinaural: 1
   interpolation: 0
-  physicsBasedAttenuation: 0
+  distanceAttenuation: 0
+  distanceAttenuationInput: 0
+  distanceAttenuationValue: 1
   airAbsorption: 0
+  airAbsorptionInput: 0
+  airAbsorptionLow: 1
+  airAbsorptionMid: 1
+  airAbsorptionHigh: 1
+  directivity: 0
+  directivityInput: 0
   dipoleWeight: 0
   dipolePower: 0
-  occlusionMode: 0
-  occlusionMethod: 0
-  sourceRadius: 1
+  directivityValue: 1
+  occlusion: 1
+  occlusionInput: 0
+  occlusionType: 0
+  occlusionRadius: 1
   occlusionSamples: 16
+  occlusionValue: 1
+  transmission: 1
+  transmissionType: 0
+  transmissionInput: 0
+  transmissionLow: 1
+  transmissionMid: 1
+  transmissionHigh: 1
   directMixLevel: 1
   reflections: 0
-  indirectBinaural: 0
-  physicsBasedAttenuationForIndirect: 1
-  indirectMixLevel: 1
-  simulationType: 0
-  uniqueIdentifier: 
-  avoidSilenceDuringInit: 0
-  overrideHRTFIndex: 0
-  hrtfIndex: 0
-  bakingRadius: 100
-  useAllProbeBoxes: 0
-  probeBoxes: []
-  bakedProbeNames: []
-  bakedProbeDataSizes: 
-  bakedDataSize: 0
-  bakedStatsFoldout: 0
-  bakeToggle: 0
-  bakedDataIdentifier:
-    identifier: 0
-    type: 0
+  reflectionsType: 0
+  useDistanceCurveForReflections: 0
+  currentBakedSource: {fileID: 0}
+  reverbTimeLow: 0
+  reverbTimeMid: 0
+  reverbTimeHigh: 0
+  hybridReverbEQLow: 1
+  hybridReverbEQMid: 1
+  hybridReverbEQHigh: 1
+  hybridReverbDelay: 0
+  applyHRTFToReflections: 0
+  reflectionsMixLevel: 1
+  pathing: 0
+  pathingProbeBatch: {fileID: 0}
+  pathValidation: 1
+  findAlternatePaths: 1
+  pathingEQ:
+  - 1
+  - 1
+  - 1
+  pathingSH:
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  - 0
+  applyHRTFToPathing: 0
+  pathingMixLevel: 1
 --- !u!114 &1476812700539597673
 MonoBehaviour:
   m_ObjectHideFlags: 0
