@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -9,6 +10,8 @@ using UnityEngine;
 using System.Linq;
 using FMOD;
 using FMOD.Studio;
+using FMODUnity;
+using Debug = UnityEngine.Debug;
 
 namespace GraphAudio
 {
@@ -23,7 +26,9 @@ namespace GraphAudio
         private NativeArray<NodeDOTS> _nodesDOTS;
         private NativeArray<EdgeDOTS> _edgesDOTS;
         private NativeMultiHashMap<int, int> _neighboursIndices;
-        private readonly List<FMODUnity.StudioEventEmitter> _soundSources = new List<FMODUnity.StudioEventEmitter>();
+        private readonly List<FMODUnity.StudioEventEmitter> _soundSources = new List<StudioEventEmitter>();
+        private readonly List<DSP> _steamDSPs = new List<DSP>();//steam audio spatilizer DSP from _soundSources[i] event
+        private readonly List<bool> _foundDSPs = new List<bool>();//steam audio spatilizer in _soundSources found (same index)
 
         private UniformGrid _uniformGrid;
         private Vector3 _oldListenerPos = new Vector3(0.0f, 0.0f, 0.0f);
@@ -53,7 +58,9 @@ namespace GraphAudio
         // FixedUpdate is called once per fixed time interval
         private void FixedUpdate()
         {
-            Vector3 listenerPos = _fmodAudioListener.transform.position;
+            //TODO: we dont use graph if we have direct path between listener and sound source
+            
+            Vector3 listenerPos = _fmodAudioListener.transform.parent.position;//we use parent transform, because fmodListener is on camera and not player model
             //only re-calculate graph if listener position has changed
             if(Vector3.Distance(listenerPos, _oldListenerPos) > 0.1f)
             {
@@ -78,8 +85,9 @@ namespace GraphAudio
                 NativeArray<float3> sourcePositions = new NativeArray<float3>(_soundSources.Count, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
                 for(int i = 0; i < _soundSources.Count; i++)
                 {
-                    sourcePositions[i] = _soundSources[i].transform.position;
-                    closeNodes.UnionWith(_uniformGrid.GetNodesAroundPosition(_soundSources[i].transform.position));
+                    //actual source position is saved in parent, because we move this gameObjects position later for direction rendering
+                    sourcePositions[i] = _soundSources[i].transform.parent.transform.position;
+                    closeNodes.UnionWith(_uniformGrid.GetNodesAroundPosition(_soundSources[i].transform.parent.transform.position));
                 }
 
                 NativeArray<NodeDOTS> closeNodesSources = new NativeArray<NodeDOTS>(closeNodes.ToArray(), Allocator.TempJob);
@@ -122,13 +130,29 @@ namespace GraphAudio
                 _pathHandle.Complete();
                 closestSourcesNodeHandle.Complete();
                 #endregion
+                
                 #region FMOD play sounds
+                List<List<Vector3>> shortestPathsPositions = new List<List<Vector3>>();
                 //Set custom fmod parameters for each source
                 for(int i = 0; i < _soundSources.Count; i++)
                 {
-                    _soundSources[i].SetParameter("GraphDistance", graphDOTS.nodes[resultsFCNIJob[i]].totalAttenuation);
-                }
+                    //occlusion and transmission via steam audio parameter
+                    var directDistance = Vector3.Distance(listenerPos, _soundSources[i].transform.parent.position);
+                    var att = graphDOTS.nodes[resultsFCNIJob[i]].totalAttenuation;
+                    var occlusion = Mathf.Clamp01(Mathf.Pow(directDistance / graphDOTS.nodes[resultsFCNIJob[i]].totalAttenuation, 2.0f));//equation 6.7 (cowan p.185)
+                    _soundSources[i].SetParameter("Occlusion", occlusion);
 
+                    //distance attenuation and direction via virtual sound source position
+                    //TODO: Transition smoother from old location to new
+                    var virtualSourcePos = listenerPos +
+                                           (Vector3)(GetShortestPathClosestNode(graphDOTS, resultsFCNIJob[i]).direction
+                                            * graphDOTS.nodes[resultsFCNIJob[i]].totalAttenuation);
+                    _soundSources[i].transform.position = virtualSourcePos;
+                    
+                    if(GraphNodeRenderer.Instance.renderShortestPaths)//get the shortest path for this source-listener pair
+                        shortestPathsPositions.Add(GetShortestPath(graphDOTS, resultsFCNIJob[i]));
+                }
+                
                 #endregion
                 //Visualize nodes closest to source positions
                 if(GraphNodeRenderer.Instance.renderClosestNodes)
@@ -141,12 +165,8 @@ namespace GraphAudio
 
                 //Visualize shortest path found by dijkstra
                 if(GraphNodeRenderer.Instance.renderShortestPaths)
-                {
-                    List<int> list = new List<int>();
-                    foreach (var i in resultsFCNIJob) list.Add(i);
-                    GraphNodeRenderer.Instance.VisualizeShortestPath(graphDOTS, list, listenerPos);
-                }
-
+                    GraphNodeRenderer.Instance.VisualizeShortestPath(shortestPathsPositions, listenerPos);
+                
                 //Dispose native arrays from sound sources FindClosestNodeIdxJob
                 closeNodesSources.Dispose();
                 sourcePositions.Dispose();
@@ -157,14 +177,13 @@ namespace GraphAudio
             }
         }
 
-        private void GetSteamAudioDSP()
+        private bool GetSteamAudioDSP(out DSP steamSpatializer, int sourceIndex)
         {
+            steamSpatializer = default;
             ChannelGroup group;
-            _soundSources[0].EventInstance.getChannelGroup(out @group);
+            _soundSources[sourceIndex].EventInstance.getChannelGroup(out @group);
             int numdsps;
             @group.getNumDSPs(out numdsps);
-            List<string> dspNames = new List<string>();
-            DSP spatializer = default;
             for (int i = 0; i < numdsps; i++)
             {
                 DSP dsp;
@@ -173,24 +192,11 @@ namespace GraphAudio
                 uint version;
                 int a, b, c;
                 dsp.getInfo(out name, out version, out a, out b, out c);
-                dspNames.Add(name);
                 if (name.Equals("Steam Audio Spatializer"))
-                    spatializer = dsp;
+                    steamSpatializer = dsp;
             }
 
-            List<string> parNames = new List<string>();
-            if (!spatializer.Equals(default(DSP)))
-            {
-                int numPar;
-                spatializer.getNumParameters(out numPar);
-                for (int i = 0; i < numPar; i++)
-                {
-                    DSP_PARAMETER_DESC desc;
-                    var res = spatializer.getParameterInfo(i, out desc);
-                    if (res == RESULT.OK)
-                        parNames.Add(desc.description);
-                }
-            }
+            return !steamSpatializer.Equals(default(DSP));
         }
 
         private void OnDisable()
@@ -206,16 +212,79 @@ namespace GraphAudio
         }
 
         /// <summary>
+        /// Iterates from the node at soundSourceNodeIndex towards the node closest to the listener
+        /// on the graphs shortest path (has to be calculated beforehands) using the node.predecessorIdx
+        /// </summary>
+        /// <param name="graph"></param>
+        /// <param name="soundSourceNodeIndex"></param>
+        /// <returns>List of positions for the nodes on shortest path from source to listener</returns>
+        private List<Vector3> GetShortestPath(GraphPathfindingDOTS graph, int soundSourceNodeIndex)
+        {
+            List<Vector3> positions = new List<Vector3>();
+            int predecessorIdx = graph.nodes[soundSourceNodeIndex].predecessorIdx;
+
+            //Add start node (sound source)
+            positions.Add(graph.nodes[soundSourceNodeIndex].position);
+
+            //iterate through graph on shortest path
+            while(predecessorIdx != -1)
+            {
+                positions.Add(graph.nodes[predecessorIdx].position);
+                predecessorIdx = graph.nodes[predecessorIdx].predecessorIdx;
+            }
+
+            return positions;
+        }
+
+        /// <summary>
+        /// Iterates from the node at soundSourceNodeIndex towards the node closest to the listener
+        /// on the graphs shortest path (has to be calculated beforehands) using the node.predecessorIdx
+        /// </summary>
+        /// <param name="graph"></param>
+        /// <param name="soundSourceNodeIndex">index of node closest to sound source</param>
+        /// <returns>Node from the shortest path source-listener closest to listener.</returns>
+        private NodeDOTS GetShortestPathClosestNode(GraphPathfindingDOTS graph, int soundSourceNodeIndex)
+        {
+            int currNodeIdx = soundSourceNodeIndex;
+            int predecessorIdx = graph.nodes[soundSourceNodeIndex].predecessorIdx;
+
+            //iterate through graph on shortest path
+            while(predecessorIdx != -1)
+            {
+                currNodeIdx = predecessorIdx;
+                predecessorIdx = graph.nodes[predecessorIdx].predecessorIdx;
+            }
+
+            return graph.nodes[currNodeIdx];
+        }
+        
+        /// <summary>
         /// Adds or removes a fmod sound source from the graph audio manager.
+        /// Also gets the Steam Audio Spatializer DSP from that source
         /// </summary>
         /// <param name="source">fmod sound source to add/remove</param>
-        /// <param name="enabled">true for adding, false for removing the source</param>
-        public void AddSoundSource(FMODUnity.StudioEventEmitter source, bool enabled)
+        public void AddSoundSource(FMODUnity.StudioEventEmitter source)
         {
-            if(enabled)
-                _soundSources.Add(source);
-            else
-                _soundSources.Remove(source);
+            _soundSources.Add(source);
+            /*bool found = GetSteamAudioDSP(out var steamSpatializer, _soundSources.Count-1);
+            _steamDSPs.Add(steamSpatializer);
+            _foundDSPs.Add(found);*/
+        }
+
+        /// <summary>
+        /// Removes a fmod sound source from the graph audio manager.
+        /// Also removes the Steam Audio Spatializer DSP from that source
+        /// </summary>
+        /// <param name="source">fmod sound source to add/remove</param>
+        public void RemoveSoundSource(FMODUnity.StudioEventEmitter source)
+        {
+            int index = _soundSources.FindIndex(x => x == source);
+            if (index != -1)
+            {
+                _soundSources.RemoveAt(index);
+                /*_steamDSPs.RemoveAt(index);
+                _foundDSPs.RemoveAt(index);*/
+            }
         }
 
         /// <summary>

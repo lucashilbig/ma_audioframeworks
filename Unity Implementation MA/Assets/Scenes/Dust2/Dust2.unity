@@ -1066,9 +1066,17 @@ PrefabInstance:
       propertyPath: OverrideMinDistance
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3698282024825531808, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
+      propertyPath: reflections
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5094951175415751899, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
       propertyPath: bakedStatsFoldout
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5551820986620258711, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
+      propertyPath: reflections
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6167083184908972666, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
       propertyPath: m_RootOrder
@@ -1122,8 +1130,32 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7490526530045595293, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7490526530045595293, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
+      propertyPath: _scaleMultiplier
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8868303603381084028, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
+      propertyPath: Event
+      value: event:/CantinaBandGraphAudioTest
+      objectReference: {fileID: 0}
+    - target: {fileID: 8868303603381084028, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
+      propertyPath: PlayEvent
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8868303603381084028, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
+      propertyPath: OverrideMaxDistance
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8868303603381084028, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
+      propertyPath: OverrideMinDistance
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents:
-    - {fileID: 5094951175415751899, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
+    - {fileID: 0}
   m_SourcePrefab: {fileID: 100100000, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
 --- !u!1 &218161821 stripped
 GameObject:
@@ -3016,7 +3048,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   renderNodesGizmo: 1
   renderNodeNamesGizmo: 0
-  renderEdgesGizmo: 1
+  renderEdgesGizmo: 0
   refresh: 0
   graph: {fileID: 11400000, guid: 14046eaa5ee4fe14894b822883f0854f, type: 2}
   renderClosestNodes: 0

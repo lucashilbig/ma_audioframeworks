@@ -4,6 +4,7 @@ using TMPro;
 using System.Collections;
 using System.Diagnostics;
 using System;
+using GraphAudio;
 
 public enum AudioFramework
 {
@@ -64,9 +65,9 @@ public class GameLogic : MonoBehaviour
         _stopwatch = new Stopwatch();
 
         if(_audioFramework != AudioFramework.GraphAudio)
-            _graphAudioManager.SetActive(false);
+            _graphAudioManager.GetComponent<GraphAudioManager>().enabled = false;
         else
-            _graphAudioManager.SetActive(true);
+            _graphAudioManager.GetComponent<GraphAudioManager>().enabled = true;
 
     }
 
@@ -227,7 +228,7 @@ public class GameLogic : MonoBehaviour
 
     private void MakeGuess()
     {
-        //TODO: Logging der Ergebnisse für Evaluation
+        //TODO: Logging der Ergebnisse fï¿½r Evaluation
         _enableGuessing = false;
         _guessFinished = true;
 
@@ -255,7 +256,7 @@ public class GameLogic : MonoBehaviour
     {
         if(_audioFramework == AudioFramework.FMOD || _audioFramework == AudioFramework.GraphAudio)
         {
-            var eventEmitter = obj.GetComponent<FMODUnity.StudioEventEmitter>();
+            var eventEmitter = obj.GetComponentInChildren<FMODUnity.StudioEventEmitter>();
             eventEmitter.ChangeEvent(GetFmodEventByName(clip.name));
             eventEmitter.Play();
         }
@@ -268,11 +269,13 @@ public class GameLogic : MonoBehaviour
             _currAudioObj.GetComponent<MeshRenderer>().enabled = _audioSourceVisible;
 
             //Set audioclip/Event
-            var eventEmitter = _currAudioObj.GetComponent<FMODUnity.StudioEventEmitter>();
+            var eventEmitter = _currAudioObj.GetComponentInChildren<FMODUnity.StudioEventEmitter>();
             eventEmitter.ChangeEvent(GetFmodEventByName(clip.name));
 
-            Destroy(_currAudioObj.GetComponent<SteamAudio.SteamAudioSource>()); //Steam Audio doesnt work otherwise
-            _currAudioObj.AddComponent<SteamAudio.SteamAudioSource>();
+            //TODO: Test if still needed after update to steamAudio 4.0
+            Destroy(_currAudioObj.GetComponentInChildren<SteamAudio.SteamAudioSource>()); //Steam Audio doesnt work otherwise
+            _currAudioObj.transform.GetChild(0).gameObject.AddComponent<SteamAudio.SteamAudioSource>();
+            
             eventEmitter.Play();
         }
         else if(_audioFramework == AudioFramework.ProjectAcoustics)

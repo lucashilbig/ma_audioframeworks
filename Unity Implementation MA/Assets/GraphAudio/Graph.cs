@@ -239,12 +239,14 @@ namespace GraphAudio
             //start node and all its neighbours are connected to the listener and totalAttenuation will be calculated after equation 6.5 of cowan (p. 177)
             NodeDOTS startNode = nodes[startNodeIdx];
             startNode.totalAttenuation = math.distance(startNode.position, listenerPos);
+            startNode.direction = Vector3.Normalize(startNode.position - listenerPos);//cowan equation 6.6
             nodes[startNode.index] = startNode;
 
             foreach(var edgeIdx in neighboursIndices.GetValuesForKey(startNode.index))
             {
                 NodeDOTS target = nodes[edges[edgeIdx].ToNodeIndex];
                 target.totalAttenuation = math.distance(target.position, listenerPos);
+                target.direction = Vector3.Normalize(target.position - listenerPos);//cowan equation 6.6
                 nodes[edges[edgeIdx].ToNodeIndex] = target;//since we have native array we need to re-assign
             }
 

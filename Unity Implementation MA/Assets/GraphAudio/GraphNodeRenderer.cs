@@ -189,40 +189,27 @@ namespace GraphAudio
             }
         }
 
-        public void VisualizeShortestPath(GraphPathfindingDOTS graph, List<int> soundSourceIndices, Vector3 listenerPos)
+        public void VisualizeShortestPath(List<List<Vector3>> pathPositions, Vector3 listenerPos)
         {
-            if(soundSourceIndices.Count != _pathLines.Count)
+            if(pathPositions.Count != _pathLines.Count)
                 return;
 
             List<Mesh> meshes = new List<Mesh>();
 
-            for(int i = 0; i < soundSourceIndices.Count; i++)
+            for(int i = 0; i < pathPositions.Count; i++)
             {
-                List<Vector3> positions = new List<Vector3>();
-                List<int> indices = new List<int>();
-                int index = 1;
-                int predecessorIdx = graph.nodes[soundSourceIndices[i]].predecessorIdx;
-
-                //Add start node (sound source)
-                positions.Add(graph.nodes[soundSourceIndices[i]].position);
-                indices.Add(0);
-
-                //iterate through graph on shortest path
-                while(predecessorIdx != -1)
-                {
-                    positions.Add(graph.nodes[predecessorIdx].position);
-                    indices.Add(index);
-                    predecessorIdx = graph.nodes[predecessorIdx].predecessorIdx;
-                    index++;
-                }
                 //add listener position as last vertex since we go from source to listener
-                positions.Add(listenerPos);
-                indices.Add(index);
-
+                pathPositions[i].Add(listenerPos);
+                
+                //create index list
+                List<int> indices = new List<int>();
+                for (int j = 0; j < pathPositions[i].Count; j++)
+                    indices.Add(j);
+                
                 Mesh mesh = new Mesh
                 {
                     name = "LineMesh" + i,
-                    vertices = positions.ToArray()
+                    vertices = pathPositions[i].ToArray()
                 };
                 mesh.SetIndices(indices.ToArray(), MeshTopology.LineStrip, 0);
                 meshes.Add(mesh);

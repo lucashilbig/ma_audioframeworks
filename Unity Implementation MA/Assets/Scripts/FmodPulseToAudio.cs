@@ -10,6 +10,7 @@ public class FmodPulseToAudio : MonoBehaviour
     [Range(0, 7)]
     public int _band = 4;
     public float _scaleMultiplier = 2.0f, _scalingRate = 10.0f;
+    public bool _useParentTransform = false;
 
     FMODUnity.StudioEventEmitter _audioSource;
     FMOD.DSP _fft;
@@ -23,7 +24,10 @@ public class FmodPulseToAudio : MonoBehaviour
     void Start()
     {
         _audioSource = GetComponent<FMODUnity.StudioEventEmitter>();
-        _baseScale = transform.localScale;
+        if(_useParentTransform)
+            _baseScale = transform.parent.transform.localScale;
+        else
+            _baseScale = transform.localScale;
 
         //Set up fast fourier transform dsp to get spectrum data later
         if(FMODUnity.RuntimeManager.CoreSystem.createDSPByType(FMOD.DSP_TYPE.FFT, out _fft) == FMOD.RESULT.OK)
@@ -106,7 +110,10 @@ public class FmodPulseToAudio : MonoBehaviour
                         //Change Object scale
                         Vector3 scale = new Vector3((_freqBand[_band] * _scaleMultiplier) + _baseScale.x,
                             (_freqBand[_band] * _scaleMultiplier) + _baseScale.y, (_freqBand[_band] * _scaleMultiplier) + _baseScale.z);
-                        transform.localScale = Vector3.Lerp(transform.localScale, scale, _scalingRate * Time.deltaTime);
+                        if(_useParentTransform)
+                            transform.parent.transform.localScale = Vector3.Lerp(transform.parent.transform.localScale, scale, _scalingRate * Time.deltaTime);
+                        else
+                            transform.localScale = Vector3.Lerp(transform.localScale, scale, _scalingRate * Time.deltaTime);
                     }
                 }
             }
