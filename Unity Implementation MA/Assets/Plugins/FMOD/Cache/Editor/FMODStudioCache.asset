@@ -246,7 +246,7 @@ MonoBehaviour:
   Is3D: 1
   IsOneShot: 0
   Parameters:
-  - {fileID: -4974877722396591962}
+  - {fileID: 1960742015755131855}
   MinDistance: 0
   MaxDistance: 0
   Length: 36075
@@ -289,7 +289,7 @@ MonoBehaviour:
   ID:
     data1: 0
     data2: 0
-  Exists: 1
+  Exists: 0
 --- !u!114 &-4937746812708407017
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -760,7 +760,7 @@ MonoBehaviour:
   IsOneShot: 0
   Parameters: []
   MinDistance: 1
-  MaxDistance: 100
+  MaxDistance: 150
   Length: 36075
 --- !u!114 &-84227529587187951
 MonoBehaviour:
@@ -810,7 +810,7 @@ MonoBehaviour:
   - {fileID: 9150446931955115607}
   StringsBanks:
   - {fileID: 1445457674666459547}
-  stringsBankWriteTime: 637667117489837452
+  stringsBankWriteTime: 637667417838223221
   cacheVersion: 6
 --- !u!114 &246308326604506621
 MonoBehaviour:
@@ -910,7 +910,7 @@ MonoBehaviour:
   Path: ../../FMOD/MA_UnityDust2/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 637667117489837452
+  lastModified: 637667417838223221
   LoadResult: 0
   FileSizes:
   - Name: Desktop
@@ -952,6 +952,26 @@ MonoBehaviour:
   Min: 0
   Max: 150
   Default: 0
+  ID:
+    data1: 0
+    data2: 0
+  Exists: 1
+--- !u!114 &1960742015755131855
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/CantinaBandGraphAudio/Occlusion
+  m_EditorClassIdentifier: 
+  Name: Occlusion
+  Min: 0
+  Max: 1
+  Default: 1
   ID:
     data1: 0
     data2: 0
@@ -1500,7 +1520,7 @@ MonoBehaviour:
   Path: ../../FMOD/MA_UnityDust2/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 637667117489807539
+  lastModified: 637667417838183326
   LoadResult: 0
   FileSizes: []
   Exists: 1
