@@ -1132,7 +1132,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7490526530045595293, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7490526530045595293, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
       propertyPath: _scaleMultiplier
@@ -1140,7 +1140,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8868303603381084028, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
       propertyPath: Event
-      value: event:/CantinaBandGraphAudioTest
+      value: event:/CantinaBandGraphAudio
       objectReference: {fileID: 0}
     - target: {fileID: 8868303603381084028, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
       propertyPath: PlayEvent
