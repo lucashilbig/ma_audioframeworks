@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
@@ -24,18 +25,113 @@ namespace GraphAudio
         //[MenuItem("Window/Graph Audio/AddY0point5")]
         public static void AddY0point5()
         {
-            var graph = (Graph)AssetDatabase.LoadAssetAtPath("Assets/GraphAudio/GraphProjectAcousticsDemo.asset", typeof(Graph));
+            var graph = (Graph) AssetDatabase.LoadAssetAtPath("Assets/GraphAudio/GraphProjectAcousticsDemo.asset", typeof(Graph));
 
             foreach (var node in graph.Nodes)
             {
                 node._location.y += 0.5f;
             }
-            
-            if(!Application.isPlaying)
-                AssetDatabase.ForceReserializeAssets(new List<string>() { "Assets/GraphAudio/GraphProjectAcousticsDemo.asset" });
+
+            if (!Application.isPlaying)
+                AssetDatabase.ForceReserializeAssets(new List<string>() {"Assets/GraphAudio/GraphProjectAcousticsDemo.asset"});
             AssetDatabase.SaveAssets();
         }
-        
+
+        //[MenuItem("Window/Graph Audio/AddNodeLayerOnTop")]
+        public static void AddNodeLayerOnTop()
+        {
+            var graph = (Graph) AssetDatabase.LoadAssetAtPath("Assets/GraphAudio/GraphProjectAcousticsDemo.asset", typeof(Graph));
+            var newNodes = new List<Node>();
+
+            foreach (var node in graph.Nodes)
+            {
+                Node newNode = Node.Create(node.name + "A");
+                var newLoc = node._location;
+                newLoc.y += 1.5f;
+                newNode._location = newLoc;
+                newNodes.Add(newNode);
+            }
+
+            foreach (var t in newNodes) graph.AddNode(t);
+
+            if (!Application.isPlaying)
+                AssetDatabase.ForceReserializeAssets(new List<string>() {"Assets/GraphAudio/GraphProjectAcousticsDemo.asset"});
+            AssetDatabase.SaveAssets();
+        }
+
+        [MenuItem("Window/Graph Audio/CleanAsset")]
+        public static void CleanAsset()
+        {
+            var graph = (Graph) AssetDatabase.LoadAssetAtPath("Assets/GraphAudio/GraphProjectAcousticsDemo.asset", typeof(Graph));
+            var namesToRemove = new List<string>();
+            for (int i = 0; i <= 3861; i++)
+            {
+                if (!graph.Nodes.Exists(x => x.name.Equals("Node" + i)))
+                    namesToRemove.Add("Node" + i);
+            }
+
+            var file = File.ReadAllLines(@"C:\Users\LucasHilbig\Documents\Uni\1_Masterarbeit\Implementation_MA\Unity Implementation MA\Assets\GraphAudio\GraphProjectAcousticsDemo.asset");
+            for(int i = 0; i < file.Length; i++)
+            {
+                if (file[i].Contains("m_Name"))
+                {
+                    var name = file[i].Split(':')[1].Trim();
+                    if (namesToRemove.Contains(name))
+                    {
+                        file[i - 10] = " ";
+                        file[i - 9] = " ";
+                        file[i - 8] = " ";
+                        file[i - 7] = " ";
+                        file[i - 6] = " ";
+                        file[i - 5] = " ";
+                        file[i - 4] = " ";
+                        file[i - 3] = " ";
+                        file[i - 2] = " ";
+                        file[i - 1] = " ";
+                        file[i] = " ";
+                        file[i + 1] = " ";
+                        file[i + 2] = " ";
+                        file[i + 3] = " ";
+                    }
+                }
+            }
+
+            var newLines = new List<string>();
+            foreach (var line in file)
+            {
+                if(!string.IsNullOrWhiteSpace(line))
+                    newLines.Add(line);
+            }
+            
+            File.WriteAllLines(@"C:\Users\LucasHilbig\Documents\Uni\1_Masterarbeit\Implementation_MA\Unity Implementation MA\Assets\GraphAudio\GraphProjectAcousticsDemo.asset",
+                newLines);
+        }
+
+
+        [MenuItem("Window/Graph Audio/CleanNullEntries")]
+        public static void CleanNullEntries()
+        {
+            var graph = (Graph) AssetDatabase.LoadAssetAtPath("Assets/GraphAudio/GraphProjectAcousticsDemo.asset", typeof(Graph));
+
+            Debug.Log("Removed null nodes: " + graph.Nodes.RemoveAll(x => x == null));
+
+            if (!Application.isPlaying)
+                AssetDatabase.ForceReserializeAssets(new List<string>() {"Assets/GraphAudio/GraphProjectAcousticsDemo.asset"});
+            AssetDatabase.SaveAssets();
+        }
+
+        [MenuItem("Window/Graph Audio/CreateAllEdges")]
+        public static void CreateAllEdges()
+        {
+            var graph = (Graph) AssetDatabase.LoadAssetAtPath("Assets/GraphAudio/GraphProjectAcousticsDemo.asset", typeof(Graph));
+
+            graph.CreateAllEdges(3.0f);
+
+            if (!Application.isPlaying)
+                AssetDatabase.ForceReserializeAssets(new List<string>() {"Assets/GraphAudio/GraphProjectAcousticsDemo.asset"});
+            AssetDatabase.SaveAssets();
+        }
+
         /// <summary>
         /// Usage: Create GameObject "BoundsHighNode" with UniformGridGizmoRenderer-Component and move the BB around the Nodes that should be
         /// removed. Then adjust the height in .RemoveAll() call.
@@ -43,15 +139,15 @@ namespace GraphAudio
         [MenuItem("Window/Graph Audio/Cleanup High Nodes")]
         public static void CleanHighNodes()
         {
-            var graph = (Graph)AssetDatabase.LoadAssetAtPath("Assets/GraphAudio/GraphProjectAcousticsDemo.asset", typeof(Graph));
+            var graph = (Graph) AssetDatabase.LoadAssetAtPath("Assets/GraphAudio/GraphProjectAcousticsDemo.asset", typeof(Graph));
             var boundsGameObject = GameObject.Find("BoundsHighNode");
             var gridBounds = new Bounds(boundsGameObject.transform.position, boundsGameObject.transform.localScale);
 
             var count = graph.Nodes.RemoveAll(x => gridBounds.Contains(x._location) && x._location.y > 5.0f);
             Debug.Log("Removed Nodes: " + count);
-            
-            if(!Application.isPlaying)
-                AssetDatabase.ForceReserializeAssets(new List<string>() { "Assets/GraphAudio/GraphProjectAcousticsDemo.asset" });
+
+            if (!Application.isPlaying)
+                AssetDatabase.ForceReserializeAssets(new List<string>() {"Assets/GraphAudio/GraphProjectAcousticsDemo.asset"});
             AssetDatabase.SaveAssets();
         }
 
@@ -101,6 +197,5 @@ namespace GraphAudio
 
             return locations;
         }
-
     }
 }
