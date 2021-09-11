@@ -46,7 +46,6 @@ namespace GraphAudio
         {
             Nodes.Add(node);
             AssetDatabase.AddObjectToAsset(node, this);
-            AssetDatabase.SaveAssets();
         }
 
         /// <summary>
@@ -102,7 +101,7 @@ namespace GraphAudio
         /// calculates the occlusion value for each edge in the graph.
         /// Calculation will be done with steam audio
         /// </summary>
-        public void CalcOcclusionAllEdges()
+        public void CalcOcclusionAllEdges(string assetPath)
         {
             //create new steamAudio simulator and load scene into it
             Context context = new Context();
@@ -137,7 +136,7 @@ namespace GraphAudio
             });
 
             if(!Application.isPlaying)
-                AssetDatabase.ForceReserializeAssets(new List<string>() { "Assets/GraphAudio/GraphDust2Acoustics.asset" });
+                AssetDatabase.ForceReserializeAssets(new List<string>() { assetPath });
             AssetDatabase.SaveAssets();
         }
 

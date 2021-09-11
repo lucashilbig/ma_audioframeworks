@@ -8,6 +8,9 @@ namespace GraphAudio
 {
     public class GraphNodeRenderer : MonoBehaviour
     {
+        public Vector3 nodesSize = new Vector3(0.5f, 0.5f, 0.5f);
+        public bool drawWhenSelected = true;
+        
         [Header("Gizmo Render Options")]
         public bool renderNodesGizmo = true;
         public bool renderNodeNamesGizmo;
@@ -41,16 +44,16 @@ namespace GraphAudio
             //runtime stuff. Add cube for listener. Sound sources will be added with a call in GraphAudioSoundSource.cs
             _cubeListener = GameObject.CreatePrimitive(PrimitiveType.Cube);
             _cubeListener.transform.SetParent(transform);
-            _cubeListener.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+            _cubeListener.transform.localScale = nodesSize;
             _cubeListener.GetComponent<BoxCollider>().enabled = false;
             _cubeListener.GetComponent<MeshRenderer>().material.color = Color.blue;
             _cubeListener.SetActive(renderClosestNodes);
         }
 
-        void OnDrawGizmosSelected()
+        void OnDrawGizmos()
         {
 #if UNITY_EDITOR
-            if(Selection.activeGameObject != transform.gameObject)
+            if(drawWhenSelected && Selection.activeGameObject != transform.gameObject)
             {
                 return;
             }
@@ -105,7 +108,6 @@ namespace GraphAudio
             if(renderNodesGizmo)
             {
                 Gizmos.color = Color.blue;
-                Vector3 cubeSize = new Vector3(0.7f, 0.7f, 0.7f);
                 for(int i = 0; i < _nodeLocations.Count; i++)
                 {
                     if(renderNodeNamesGizmo)
@@ -114,7 +116,7 @@ namespace GraphAudio
                         labelPos.y += 0.4f;
                         Handles.Label(labelPos, _nodeLocations[i].Item2);
                     }
-                    Gizmos.DrawCube(_nodeLocations[i].Item1, cubeSize);
+                    Gizmos.DrawCube(_nodeLocations[i].Item1, nodesSize);
                 }
             }
             // draw all the edges. Map occlusion factor to edge color. 255 (1.0f, not occluded) is green and 0 is red
@@ -232,7 +234,7 @@ namespace GraphAudio
         {
             var newCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
             newCube.transform.SetParent(transform);
-            newCube.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
+            newCube.transform.localScale = nodesSize;
             newCube.GetComponent<BoxCollider>().enabled = false;
             newCube.GetComponent<MeshRenderer>().material.color = Color.red;
             newCube.SetActive(renderClosestNodes);
@@ -266,22 +268,4 @@ namespace GraphAudio
 
     }
 
-
-    public static class AcousticsProbesToGraph
-    {
-
-        public static void ConvertToGraph(string graphName, List<Vector3> probeLocations)
-        {
-            // Create graph
-            Graph graph = Graph.Create(graphName);
-
-            //Create Node for every Acoustics probe location
-            for(int i = 0; i < probeLocations.Count; i++)
-            {
-                Node node = Node.Create("Node" + i);
-                node._location = probeLocations[i];
-                graph.AddNode(node);
-            }
-        }
-    }
 }

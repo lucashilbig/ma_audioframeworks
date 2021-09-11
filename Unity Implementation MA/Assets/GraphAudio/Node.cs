@@ -36,13 +36,29 @@ namespace GraphAudio
 
         public void AddEdge(Node target)
         {
-            //TODO: Dont save every edge asset separat. Takes ages
             Edge edge = Edge.Create(target, this.name);
             edge._occlusion = byte.MaxValue;//full occluded: 255
+            edge._occlusionFloat = 1.0f;
             edge._length = Vector3.Distance(_location, target._location);
             Neighbors.Add(edge);
             AssetDatabase.AddObjectToAsset(edge, this);
-            AssetDatabase.SaveAssets();
+        }
+        
+        public override bool Equals(object obj)
+        {
+            if (obj == null)
+                return false;
+            
+            if(!(obj is Node))
+                return false;
+
+            Node strct = (Node) obj;
+            return this._location.Equals(strct._location);
+        }
+
+        public override int GetHashCode()
+        {
+            return _location.GetHashCode();
         }
     }
 
