@@ -3,13 +3,13 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace GraphAudio
 {
     public class GraphNodeRenderer : MonoBehaviour
     {
         public Vector3 nodesSize = new Vector3(0.5f, 0.5f, 0.5f);
-        public bool drawWhenSelected = true;
         
         [Header("Gizmo Render Options")]
         public bool renderNodesGizmo = true;
@@ -50,58 +50,17 @@ namespace GraphAudio
             _cubeListener.SetActive(renderClosestNodes);
         }
 
-        void OnDrawGizmos()
+        void OnDrawGizmosSelected()
         {
 #if UNITY_EDITOR
-            if(drawWhenSelected && Selection.activeGameObject != transform.gameObject)
+            if(Selection.activeGameObject != transform.gameObject)
             {
                 return;
             }
             //cache locations from graph nodes once, since Start() doesnt run while not playing
             if(_nodeLocations == null || _nodeLocations.Count == 0)
             {
-                _nodeLocations = new List<Tuple<Vector3, string>>();
-                _edgeLocations = new List<Tuple<Vector3, Vector3>>();
-                _occlusionFactors = new List<byte>();
-                //Cache locations from graph nodes
-                foreach(Node node in graph.Nodes)
-                {
-                    _nodeLocations.Add(new Tuple<Vector3, string>(node._location, node.name));
-                    //Cache edges
-                    foreach(Edge edge in node.Neighbors)
-                    {
-                        //TODO: fix kanten verschiebung
-                        Vector3 a = node._location;
-                        Vector3 b = edge._target._location;
-                        //offset edge a bit because we have 2 edges from each node connection
-                        if(Math.Abs(a.z - b.z) < 0.1f)
-                        {
-                            a.z += 0.2f;
-                            b.z += 0.2f;
-                        }
-                        else
-                        {
-                            a.x += 0.2f;
-                            b.x += 0.2f;
-                        }
-                        var edgeLocReverse = new Tuple<Vector3, Vector3>(b, a);
-                        if(_edgeLocations.Contains(edgeLocReverse))
-                        {
-                            if(Math.Abs(a.z - b.z) < 0.1f)
-                            {
-                                a.z -= 0.4f;
-                                b.z -= 0.4f;
-                            }
-                            else
-                            {
-                                a.x -= 0.4f;
-                                b.x -= 0.4f;
-                            }
-                        }
-                        _edgeLocations.Add(new Tuple<Vector3, Vector3>(a, b));
-                        _occlusionFactors.Add(edge._occlusion);
-                    }
-                }
+                CacheGraphData();
             }
 
             // draw all the nodes
@@ -133,6 +92,65 @@ namespace GraphAudio
 #endif
         }
 
+        private void CacheGraphData()
+        {
+            _nodeLocations = new List<Tuple<Vector3, string>>();
+            _edgeLocations = new List<Tuple<Vector3, Vector3>>();
+            _occlusionFactors = new List<byte>();
+            var isDustScene = SceneManager.GetActiveScene().name == "Dust2";
+            //Cache locations from graph nodes
+            foreach (Node node in graph.Nodes)
+            {
+                _nodeLocations.Add(new Tuple<Vector3, string>(node._location, node.name));
+                if (isDustScene)
+                {
+                    //Cache edges
+                    foreach (Edge edge in node.Neighbors)
+                    {
+                        Vector3 a = node._location;
+                        Vector3 b = edge._target._location;
+                        //offset edge a bit because we have 2 edges from each node connection
+                        if (Math.Abs(a.z - b.z) < 0.1f)
+                        {
+                            a.z += 0.2f;
+                            b.z += 0.2f;
+                        }
+                        else
+                        {
+                            a.x += 0.2f;
+                            b.x += 0.2f;
+                        }
+
+                        var edgeLocReverse = new Tuple<Vector3, Vector3>(b, a);
+                        if (_edgeLocations.Contains(edgeLocReverse))
+                        {
+                            if (Math.Abs(a.z - b.z) < 0.1f)
+                            {
+                                a.z -= 0.4f;
+                                b.z -= 0.4f;
+                            }
+                            else
+                            {
+                                a.x -= 0.4f;
+                                b.x -= 0.4f;
+                            }
+                        }
+
+                        _edgeLocations.Add(new Tuple<Vector3, Vector3>(a, b));
+                        _occlusionFactors.Add(edge._occlusion);
+                    }
+                }
+                Debug.Log("GraphAudio: Cache updated.");
+            }
+            
+            if(!isDustScene)
+                foreach (var edge in graph.AllEdges)
+                {
+                    _edgeLocations.Add(new Tuple<Vector3, Vector3>(edge._origin._location, edge._target._location));
+                    _occlusionFactors.Add(edge._occlusion);
+                }
+        }
+
         void OnValidate()
         {
             if(Application.isPlaying)
@@ -145,48 +163,7 @@ namespace GraphAudio
             //Re-cache graph nodes
             if(refresh)
             {
-                _nodeLocations = new List<Tuple<Vector3, string>>();
-                _edgeLocations = new List<Tuple<Vector3, Vector3>>();
-                _occlusionFactors = new List<byte>();
-                //Cache locations from graph nodes
-                foreach(Node node in graph.Nodes)
-                {
-                    _nodeLocations.Add(new Tuple<Vector3, string>(node._location, node.name));
-                    //Cache edges
-                    foreach(Edge edge in node.Neighbors)
-                    {
-                        Vector3 a = node._location;
-                        Vector3 b = edge._target._location;
-                        //offset edge a bit because we have 2 edges from each node connection
-                        if(Math.Abs(a.z - b.z) < 0.1f)
-                        {
-                            a.z += 0.2f;
-                            b.z += 0.2f;
-                        }
-                        else
-                        {
-                            a.x += 0.2f;
-                            b.x += 0.2f;
-                        }
-                        var edgeLocReverse = new Tuple<Vector3, Vector3>(b, a);
-                        if(_edgeLocations.Contains(edgeLocReverse))
-                        {
-                            if(Math.Abs(a.z - b.z) < 0.1f)
-                            {
-                                a.z -= 0.4f;
-                                b.z -= 0.4f;
-                            }
-                            else
-                            {
-                                a.x -= 0.4f;
-                                b.x -= 0.4f;
-                            }
-                        }
-                        _edgeLocations.Add(new Tuple<Vector3, Vector3>(a, b));
-                        _occlusionFactors.Add(edge._occlusion);
-                    }
-
-                }
+                CacheGraphData();
                 refresh = false;
             }
         }

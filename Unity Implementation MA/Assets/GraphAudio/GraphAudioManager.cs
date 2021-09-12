@@ -34,7 +34,10 @@ namespace GraphAudio
         private Dictionary<int, float3> _newSourcePositions = new Dictionary<int, float3>();
         private int _interpolationFramesCount = 45; // Number of frames to completely interpolate between 2 positions
         private int _elapsedFrames = 0;
+        private const int _layerMask = 1 << 6;// Bit shift the index of the map layer (6) to get a bit mask
 
+        private Stopwatch _watch;
+        
 
         private void Awake()
         {
@@ -55,6 +58,8 @@ namespace GraphAudio
             //Create uniform grid with our graph nodes
             GameObject child = transform.GetChild(0).gameObject;
             _uniformGrid = new UniformGrid(in _nodesDOTS, new Bounds(child.transform.position, child.transform.localScale), child.GetComponent<UniformGridGizmoRenderer>()._gridSize);
+            
+            _watch = new Stopwatch();
         }
 
         // FixedUpdate is called once per fixed time interval
@@ -68,13 +73,15 @@ namespace GraphAudio
             //we dont use graph if we have direct path between listener and sound source
             List<int> activeSourceIndices = new List<int>(); //contains indices of _soundSources that use the graph (no direct path to listener)
             List<List<Vector3>> shortestPathsPositions = new List<List<Vector3>>(); //for shortest path visualization
+            
             for (int i = 0; i < _soundSources.Count; i++)
-                if (Physics.Linecast(_fmodAudioListener.transform.position, _soundSources[i].transform.parent.position))
+                if (Physics.Linecast(_fmodAudioListener.transform.position, _soundSources[i].transform.parent.position, _layerMask))
                     activeSourceIndices.Add(i);
                 else
                 {
-                    //reset virtual sound source position to origin
+                    //reset virtual sound source position and occlusion value
                     _soundSources[i].transform.localPosition = Vector3.zero;
+                    _soundSources[i].SetParameter("Occlusion", 1.0f);
                     //add for GraphNodeRenderer.Instance.renderShortestPaths
                     shortestPathsPositions.Add(new List<Vector3>(2) {_soundSources[i].transform.parent.position}); //listener pos will be added in graphNodeRenderer
                 }
@@ -88,9 +95,9 @@ namespace GraphAudio
                 return;
             }
 
-
+            _watch.Restart();
+            
             #region Listener find closest Node
-
             NativeArray<float3> listenerArray = new NativeArray<float3>(1, Allocator.TempJob);
             listenerArray[0] = listenerPos;
             //native array containing the nodes close to the listener position
@@ -216,6 +223,8 @@ namespace GraphAudio
 
             //reset _nodes array for next frame
             _clearHandle = new ResetNodesArray {nodes = _nodesDOTS}.Schedule(_nodesDOTS.Length, 1);
+            
+            Debug.Log("Time: " + _watch.Elapsed.TotalMilliseconds + "ms");
         }
 
         private bool GetSteamAudioDSP(out DSP steamSpatializer, int sourceIndex)
@@ -250,6 +259,8 @@ namespace GraphAudio
             _nodesDOTS.Dispose();
             _edgesDOTS.Dispose();
             _neighboursIndices.Dispose();
+            
+            _watch.Stop();
         }
 
         /// <summary>
@@ -355,13 +366,20 @@ namespace GraphAudio
                 //add each edge from this node to our list. Also save the index from this edge for our node neighbour list
                 foreach (Edge edg in graph.Nodes[i].Neighbors)
                 {
-                    edges.Add(new EdgeDOTS()
+                    var newEdge = new EdgeDOTS()
                     {
                         length = edg._length * (1 + (Mathf.Pow(edg._occlusion, 1.5f) / 4)), //Equation 6.2 (Cowan page 173)
-                        FromNodeIndex = i,
+                        FromNodeIndex = graph.Nodes.FindIndex(x => x == edg._origin),
                         ToNodeIndex = graph.Nodes.FindIndex(x => x == edg._target)
-                    });
-                    neighboursIndices.Add(i, edges.Count - 1); //NativeMultiHashMap can have multiple values for a key. We use this to save all edges indices from a single node                  
+                    };
+                    var index = edges.FindIndex(x => x.FromNodeIndex == newEdge.FromNodeIndex && x.ToNodeIndex == newEdge.ToNodeIndex);
+                    if(index == -1)
+                    {
+                        edges.Add(newEdge);   
+                        neighboursIndices.Add(i, edges.Count - 1); //NativeMultiHashMap can have multiple values for a key. We use this to save all edges indices from a single node                  
+                    }
+                    else
+                        neighboursIndices.Add(i, index); //NativeMultiHashMap can have multiple values for a key. We use this to save all edges indices from a single node                  
                 }
             }
 

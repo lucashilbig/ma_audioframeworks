@@ -15,12 +15,14 @@ namespace GraphAudio
 
         [Header("Graph related")]
         public Node _target;
+        public Node _origin;
 
-        public static Edge Create(Node target, string sourceNodeName)
+        public static Edge Create(Node target, Node origin)
         {
             Edge edge = CreateInstance<Edge>();
             edge._target = target;
-            edge.name = "EdgeFrom" + sourceNodeName + "To" + target.name;
+            edge._origin = origin;
+            edge.name = "EdgeFrom" + origin.name + "To" + target.name;
             return edge;
         }
     }

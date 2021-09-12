@@ -34,14 +34,15 @@ namespace GraphAudio
             return node;
         }
 
-        public void AddEdge(Node target)
+        public Edge AddEdge(Node target)
         {
-            Edge edge = Edge.Create(target, this.name);
+            Edge edge = Edge.Create(target, this);
             edge._occlusion = byte.MaxValue;//full occluded: 255
             edge._occlusionFloat = 1.0f;
             edge._length = Vector3.Distance(_location, target._location);
             Neighbors.Add(edge);
             AssetDatabase.AddObjectToAsset(edge, this);
+            return edge;
         }
         
         public override bool Equals(object obj)

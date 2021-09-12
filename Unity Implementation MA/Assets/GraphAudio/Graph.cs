@@ -19,6 +19,8 @@ namespace GraphAudio
     {
         [SerializeField]
         private List<Node> nodes;
+        [SerializeField]
+        private List<Edge> allEdges;
         public List<Node> Nodes
         {
             get
@@ -30,6 +32,19 @@ namespace GraphAudio
 
                 return nodes;
             }
+        }
+        public List<Edge> AllEdges
+        {
+            get
+            {
+                if(allEdges == null)
+                {
+                    allEdges = new List<Edge>();
+                }
+
+                return allEdges;
+            }
+            private set => allEdges = value;
         }
 
         public static Graph Create(string name)
@@ -67,10 +82,18 @@ namespace GraphAudio
             });
 
             //create Edges towards Neighbours for each node
-            foreach(var tuple in neighbours)
-                foreach(var nd in tuple.Item2)
-                    tuple.Item1.AddEdge(nd);
+            var allEdgesList = new List<Edge>();
+            foreach(var (item1, item2) in neighbours)
+                foreach(var nd in item2)
+                {
+                    var edge = allEdgesList.Find(x => x._target == item1 && x._origin == nd);
+                    if(edge == null)
+                        allEdgesList.Add(item1.AddEdge(nd));
+                    else
+                        item1.Neighbors.Add(edge);
+                }
 
+            AllEdges = allEdgesList;
         }
 
         /// <summary>
@@ -243,10 +266,11 @@ namespace GraphAudio
 
             foreach(var edgeIdx in neighboursIndices.GetValuesForKey(startNode.index))
             {
-                NodeDOTS target = nodes[edges[edgeIdx].ToNodeIndex];
+                var targetIdx = (edges[edgeIdx].ToNodeIndex != startNode.index) ? edges[edgeIdx].ToNodeIndex : edges[edgeIdx].FromNodeIndex;
+                NodeDOTS target = nodes[targetIdx];
                 target.totalAttenuation = math.distance(target.position, listenerPos);
                 target.direction = Vector3.Normalize(target.position - listenerPos);//cowan equation 6.6
-                nodes[edges[edgeIdx].ToNodeIndex] = target;//since we have native array we need to re-assign
+                nodes[targetIdx] = target;//since we have native array we need to re-assign
             }
 
             //create HeapMap as priority queue. We use nodes.totalAttenuation for sorting
@@ -263,14 +287,15 @@ namespace GraphAudio
                 //iterate this nodes edges and update neighbour nodes totalAttenuation/path length
                 foreach(var edgeIdx in neighboursIndices.GetValuesForKey(current.index))
                 {
-                    NodeDOTS target = nodes[edges[edgeIdx].ToNodeIndex];
+                    var targetIdx = (edges[edgeIdx].ToNodeIndex != current.index) ? edges[edgeIdx].ToNodeIndex : edges[edgeIdx].FromNodeIndex;
+                    NodeDOTS target = nodes[targetIdx];
                     float newPathLength = current.totalAttenuation + edges[edgeIdx].length;
                     if(newPathLength < target.totalAttenuation)
                     {
                         //update target node
                         target.totalAttenuation = newPathLength;
                         target.predecessorIdx = current.index;
-                        nodes[edges[edgeIdx].ToNodeIndex] = target;//since we have native array we need to re-assign
+                        nodes[targetIdx] = target;//since we have native array we need to re-assign
 
                         //update priority queue
                         if(priorityQueue.IsValidIndex(heapIndices[target.index]))

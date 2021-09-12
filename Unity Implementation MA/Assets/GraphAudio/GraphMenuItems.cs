@@ -10,7 +10,7 @@ namespace GraphAudio
 {
     public static class GraphMenuItems
     {
-        [MenuItem("Window/Graph Audio/Create Graph from Navmesh")]
+        //[MenuItem("Window/Graph Audio/Create Graph from Navmesh")]
         public static void CreateGraphFromNavmesh()
         {
             // Create graph
@@ -37,7 +37,7 @@ namespace GraphAudio
             AssetDatabase.SaveAssets();
         }
 
-        //[MenuItem("Window/Graph Audio/AddNodeLayerOnTop")]
+        [MenuItem("Window/Graph Audio/AddNodeLayerOnTop")]
         public static void AddNodeLayerOnTop()
         {
             var graph = (Graph) AssetDatabase.LoadAssetAtPath("Assets/GraphAudio/GraphProjectAcousticsDemo.asset", typeof(Graph));
@@ -59,7 +59,7 @@ namespace GraphAudio
             AssetDatabase.SaveAssets();
         }
 
-        [MenuItem("Window/Graph Audio/CleanAsset")]
+        //[MenuItem("Window/Graph Audio/CleanAsset")]
         public static void CleanAsset()
         {
             var graph = (Graph) AssetDatabase.LoadAssetAtPath("Assets/GraphAudio/GraphProjectAcousticsDemo.asset", typeof(Graph));
@@ -108,7 +108,7 @@ namespace GraphAudio
         }
 
 
-        [MenuItem("Window/Graph Audio/CleanNullEntries")]
+        //[MenuItem("Window/Graph Audio/CleanNullEntries")]
         public static void CleanNullEntries()
         {
             var graph = (Graph) AssetDatabase.LoadAssetAtPath("Assets/GraphAudio/GraphProjectAcousticsDemo.asset", typeof(Graph));
