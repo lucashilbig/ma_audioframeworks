@@ -11,7 +11,10 @@ using System.Linq;
 using FMOD;
 using FMOD.Studio;
 using FMODUnity;
+using SteamAudio;
+using UnityEditor;
 using Debug = UnityEngine.Debug;
+using Vector3 = UnityEngine.Vector3;
 
 namespace GraphAudio
 {
@@ -32,11 +35,10 @@ namespace GraphAudio
         private Vector3 _oldListenerPos = new Vector3(0.0f, 0.0f, 0.0f);
         private Dictionary<int, Vector3> _oldSourcePositions = new Dictionary<int, Vector3>();
         private Dictionary<int, float3> _newSourcePositions = new Dictionary<int, float3>();
-        private int _interpolationFramesCount = 45; // Number of frames to completely interpolate between 2 positions
+        private int _interpolationFramesCount = 30; // Number of frames to completely interpolate between 2 positions
         private int _elapsedFrames = 0;
         private const int _layerMask = 1 << 6;// Bit shift the index of the map layer (6) to get a bit mask
 
-        private Stopwatch _watch;
         
 
         private void Awake()
@@ -59,172 +61,181 @@ namespace GraphAudio
             GameObject child = transform.GetChild(0).gameObject;
             _uniformGrid = new UniformGrid(in _nodesDOTS, new Bounds(child.transform.position, child.transform.localScale), child.GetComponent<UniformGridGizmoRenderer>()._gridSize);
             
-            _watch = new Stopwatch();
+            //StartCoroutine(CalcEdgesOcclusion());
         }
 
         // FixedUpdate is called once per fixed time interval
         private void FixedUpdate()
         {
-            //only re-calculate if listener position has changed
-            Vector3 listenerPos = _fmodAudioListener.transform.parent.position; //we use parent transform, because fmodListener is on camera and not player model
-            if (Vector3.Distance(listenerPos, _oldListenerPos) <= 0.1f)
-                return;
+             //only re-calculate if listener position has changed
+             Vector3 listenerPos = _fmodAudioListener.transform.parent.position; //we use parent transform, because fmodListener is on camera and not player model
+             if (Vector3.Distance(listenerPos, _oldListenerPos) <= 0.1f)
+                 return;
 
-            //we dont use graph if we have direct path between listener and sound source
-            List<int> activeSourceIndices = new List<int>(); //contains indices of _soundSources that use the graph (no direct path to listener)
-            List<List<Vector3>> shortestPathsPositions = new List<List<Vector3>>(); //for shortest path visualization
-            
-            for (int i = 0; i < _soundSources.Count; i++)
-                if (Physics.Linecast(_fmodAudioListener.transform.position, _soundSources[i].transform.parent.position, _layerMask))
-                    activeSourceIndices.Add(i);
-                else
-                {
-                    //reset virtual sound source position and occlusion value
-                    _soundSources[i].transform.localPosition = Vector3.zero;
-                    _soundSources[i].SetParameter("Occlusion", 1.0f);
-                    //add for GraphNodeRenderer.Instance.renderShortestPaths
-                    shortestPathsPositions.Add(new List<Vector3>(2) {_soundSources[i].transform.parent.position}); //listener pos will be added in graphNodeRenderer
-                }
+             //we dont use graph if we have direct path between listener and sound source
+             List<int> activeSourceIndices = new List<int>(); //contains indices of _soundSources that use the graph (no direct path to listener)
+             List<List<Vector3>> shortestPathsPositions = new List<List<Vector3>>(); //for shortest path visualization
+             
+             for (int i = 0; i < _soundSources.Count; i++)
+                 if (Physics.Linecast(_fmodAudioListener.transform.position, _soundSources[i].transform.parent.position, _layerMask))
+                     activeSourceIndices.Add(i);
+                 else
+                 {
+                     //reset virtual sound source position and occlusion value
+                     _soundSources[i].transform.position = 
+                         Vector3.Lerp(_oldSourcePositions[i], _soundSources[i].transform.parent.position, Mathf.Clamp01((float)_elapsedFrames / _interpolationFramesCount));
+                     _elapsedFrames++;
+                     _soundSources[i].SetParameter("Occlusion", 1.0f);
+                     //add for GraphNodeRenderer.Instance.renderShortestPaths
+                     shortestPathsPositions.Add(new List<Vector3>(2) {_soundSources[i].transform.parent.position}); //listener pos will be added in graphNodeRenderer
+                 }
 
-            if (activeSourceIndices.Count == 0)
-            {
-                if (GraphNodeRenderer.Instance.renderShortestPaths)
-                    GraphNodeRenderer.Instance.VisualizeShortestPath(shortestPathsPositions, listenerPos);
-                //cache new listener position
-                _oldListenerPos = listenerPos;
-                return;
-            }
+             if (activeSourceIndices.Count == 0)
+             {
+                 if (GraphNodeRenderer.Instance.renderShortestPaths)
+                     GraphNodeRenderer.Instance.VisualizeShortestPath(shortestPathsPositions, listenerPos);
+                 //cache new listener position
+                 _oldListenerPos = listenerPos;
+                 return;
+             }
+             
+             #region Listener find closest Node
+             NativeArray<float3> listenerArray = new NativeArray<float3>(1, Allocator.TempJob);
+             listenerArray[0] = listenerPos;
+             //native array containing the nodes close to the listener position
+             NativeArray<NodeDOTS> closeNodesListener = new NativeArray<NodeDOTS>(_uniformGrid.GetNodesAroundPosition(listenerPos), Allocator.TempJob);
+             NativeArray<int> resultsFCNIJob = new NativeArray<int>(activeSourceIndices.Count, Allocator.TempJob); //for result of FindClosestNodeIdxJob
 
-            _watch.Restart();
-            
-            #region Listener find closest Node
-            NativeArray<float3> listenerArray = new NativeArray<float3>(1, Allocator.TempJob);
-            listenerArray[0] = listenerPos;
-            //native array containing the nodes close to the listener position
-            NativeArray<NodeDOTS> closeNodesListener = new NativeArray<NodeDOTS>(_uniformGrid.GetNodesAroundPosition(listenerPos), Allocator.TempJob);
-            NativeArray<int> resultsFCNIJob = new NativeArray<int>(activeSourceIndices.Count, Allocator.TempJob); //for result of FindClosestNodeIdxJob
+             //get players/listeners nearest node as resultsFCNIJob[0] via Job
+             JobHandle closestListenerNodeHandle = new FindClosestNodeIdxJob
+             {
+                 positions = listenerArray,
+                 nodes = closeNodesListener,
+                 closestNodeIdx = resultsFCNIJob
+             }.Schedule();
 
-            //get players/listeners nearest node as resultsFCNIJob[0] via Job
-            JobHandle closestListenerNodeHandle = new FindClosestNodeIdxJob
-            {
-                positions = listenerArray,
-                nodes = closeNodesListener,
-                closestNodeIdx = resultsFCNIJob
-            }.Schedule();
+             #endregion
 
-            #endregion
+             #region Sound sources find closest Node & graph pathfinding
 
-            #region Sound sources find closest Node & graph pathfinding
+             //get all nodes close to all audio source positions
+             HashSet<NodeDOTS> closeNodes = new HashSet<NodeDOTS>();
+             NativeArray<float3> sourcePositions = new NativeArray<float3>(activeSourceIndices.Count, Allocator.TempJob,
+                 NativeArrayOptions.UninitializedMemory);
+             for (int i = 0; i < activeSourceIndices.Count; i++)
+             {
+                 //actual source position is saved in parent, because we move this gameObjects position later for direction rendering
+                 sourcePositions[i] = _soundSources[activeSourceIndices[i]].transform.parent.transform.position;
+                 closeNodes.UnionWith(
+                     _uniformGrid.GetNodesAroundPosition(_soundSources[activeSourceIndices[i]].transform.parent.transform.position));
+             }
 
-            //get all nodes close to all audio source positions
-            HashSet<NodeDOTS> closeNodes = new HashSet<NodeDOTS>();
-            NativeArray<float3> sourcePositions = new NativeArray<float3>(activeSourceIndices.Count, Allocator.TempJob,
-                NativeArrayOptions.UninitializedMemory);
-            for (int i = 0; i < activeSourceIndices.Count; i++)
-            {
-                //actual source position is saved in parent, because we move this gameObjects position later for direction rendering
-                sourcePositions[i] = _soundSources[activeSourceIndices[i]].transform.parent.transform.position;
-                closeNodes.UnionWith(
-                    _uniformGrid.GetNodesAroundPosition(_soundSources[activeSourceIndices[i]].transform.parent.transform.position));
-            }
+             NativeArray<NodeDOTS> closeNodesSources =
+                 new NativeArray<NodeDOTS>(closeNodes.ToArray(), Allocator.TempJob);
 
-            NativeArray<NodeDOTS> closeNodesSources =
-                new NativeArray<NodeDOTS>(closeNodes.ToArray(), Allocator.TempJob);
+             //make sure arrays have been reseted from last frames clearJob
+             _clearHandle.Complete();
+             closestListenerNodeHandle.Complete();
 
-            //make sure arrays have been reseted from last frames clearJob
-            _clearHandle.Complete();
-            closestListenerNodeHandle.Complete();
+             //Visualize node closest to listener position
+             if (GraphNodeRenderer.Instance.renderClosestNodes)
+                 GraphNodeRenderer.Instance.SetListenerPos(_nodesDOTS[resultsFCNIJob[0]].position);
 
-            //Visualize node closest to listener position
-            if (GraphNodeRenderer.Instance.renderClosestNodes)
-                GraphNodeRenderer.Instance.SetListenerPos(_nodesDOTS[resultsFCNIJob[0]].position);
+             //create our pathfinding job and execute it
+             GraphPathfindingDOTS graphDOTS = new GraphPathfindingDOTS
+             {
+                 nodes = _nodesDOTS,
+                 edges = _edgesDOTS,
+                 neighboursIndices = _neighboursIndices,
+                 startNodeIdx = resultsFCNIJob[0],
+                 listenerPos = listenerPos
+             };
+             _pathHandle = graphDOTS.Schedule();
 
-            //create our pathfinding job and execute it
-            GraphPathfindingDOTS graphDOTS = new GraphPathfindingDOTS
-            {
-                nodes = _nodesDOTS,
-                edges = _edgesDOTS,
-                neighboursIndices = _neighboursIndices,
-                startNodeIdx = resultsFCNIJob[0],
-                listenerPos = listenerPos
-            };
-            _pathHandle = graphDOTS.Schedule();
-
-            //create job to find closest nodes for each soundSource
-            JobHandle closestSourcesNodeHandle = new FindClosestNodeIdxJob
-            {
-                positions = sourcePositions,
-                nodes = closeNodesSources,
-                closestNodeIdx = resultsFCNIJob
-            }.Schedule();
+             //create job to find closest nodes for each soundSource
+             JobHandle closestSourcesNodeHandle = new FindClosestNodeIdxJob
+             {
+                 positions = sourcePositions,
+                 nodes = closeNodesSources,
+                 closestNodeIdx = resultsFCNIJob
+             }.Schedule();
 
 
-            //Dispose native arrays from listeners FindClosestNodeIdxJob
-            closeNodesListener.Dispose();
-            listenerArray.Dispose();
+             //Dispose native arrays from listeners FindClosestNodeIdxJob
+             closeNodesListener.Dispose();
+             listenerArray.Dispose();
 
-            //cache new listener position
-            _oldListenerPos = listenerPos;
+             //cache new listener position
+             _oldListenerPos = listenerPos;
 
+             _pathHandle.Complete();
+             closestSourcesNodeHandle.Complete();
+
+             #endregion
+
+             #region FMOD play sounds
+
+             //Set custom fmod parameters for each source
+             for (int i = 0; i < activeSourceIndices.Count; i++)
+             {
+                 //occlusion and transmission via steam audio parameter
+                 var directDistance = Vector3.Distance(listenerPos, _soundSources[activeSourceIndices[i]].transform.parent.position);
+                 var occlusion =
+                     Mathf.Clamp01(Mathf.Pow(directDistance / graphDOTS.nodes[resultsFCNIJob[i]].totalAttenuation,
+                         2.0f)); //equation 6.7 (cowan p.185)
+                 _soundSources[activeSourceIndices[i]].SetParameter("Occlusion", occlusion*0.5f);
+
+                 //distance attenuation and direction via virtual sound source position
+                 var closestNode = GetShortestPathClosestNode(graphDOTS, resultsFCNIJob[i]);
+                 if (!closestNode.position.Equals(_newSourcePositions[activeSourceIndices[i]]) )
+                 {
+                     _oldSourcePositions[activeSourceIndices[i]] = _soundSources[activeSourceIndices[i]].transform.position;
+                     _newSourcePositions[activeSourceIndices[i]] = closestNode.position;
+                     _elapsedFrames = 0;
+                 }
+                 var virtualSourcePos = listenerPos + (Vector3)(closestNode.direction * graphDOTS.nodes[resultsFCNIJob[i]].totalAttenuation);
+                 _soundSources[activeSourceIndices[i]].transform.position = 
+                     Vector3.Lerp(_oldSourcePositions[activeSourceIndices[i]], virtualSourcePos, Mathf.Clamp01((float)_elapsedFrames / _interpolationFramesCount));
+                 _elapsedFrames++;
+
+                 if (GraphNodeRenderer.Instance.renderShortestPaths) //get the shortest path for this source-listener pair
+                     shortestPathsPositions.Add(GetShortestPath(graphDOTS, resultsFCNIJob[i]));
+             }
+
+             #endregion
+
+             //Visualize nodes closest to source positions
+             if (GraphNodeRenderer.Instance.renderClosestNodes)
+             {
+                 List<Vector3> positions = new List<Vector3>();
+                 for (int i = 0; i < activeSourceIndices.Count; i++)
+                     positions.Add(_nodesDOTS[resultsFCNIJob[i]].position);
+                 GraphNodeRenderer.Instance.SetSourcePositions(positions);
+             }
+
+             //Visualize shortest path found by dijkstra
+             if (GraphNodeRenderer.Instance.renderShortestPaths)
+                 GraphNodeRenderer.Instance.VisualizeShortestPath(shortestPathsPositions, listenerPos);
+
+             //Dispose native arrays from sound sources FindClosestNodeIdxJob
+             closeNodesSources.Dispose();
+             sourcePositions.Dispose();
+             resultsFCNIJob.Dispose();
+
+             //reset _nodes array for next frame
+             _clearHandle = new ResetNodesArray {nodes = _nodesDOTS}.Schedule(_nodesDOTS.Length, 1);
+        }
+
+        private void OnDisable()
+        {
+            //wait for jobs to finish
             _pathHandle.Complete();
-            closestSourcesNodeHandle.Complete();
+            _clearHandle.Complete();
 
-            #endregion
-
-            #region FMOD play sounds
-
-            //Set custom fmod parameters for each source
-            for (int i = 0; i < activeSourceIndices.Count; i++)
-            {
-                //occlusion and transmission via steam audio parameter
-                var directDistance = Vector3.Distance(listenerPos, _soundSources[activeSourceIndices[i]].transform.parent.position);
-                var occlusion =
-                    Mathf.Clamp01(Mathf.Pow(directDistance / graphDOTS.nodes[resultsFCNIJob[i]].totalAttenuation,
-                        2.0f)); //equation 6.7 (cowan p.185)
-                _soundSources[activeSourceIndices[i]].SetParameter("Occlusion", occlusion*0.5f);
-
-                //distance attenuation and direction via virtual sound source position
-                //TODO: Transition smoother from old location to new
-                var closestNode = GetShortestPathClosestNode(graphDOTS, resultsFCNIJob[i]);
-                if (!closestNode.position.Equals(_newSourcePositions[activeSourceIndices[i]]) )
-                {
-                    _oldSourcePositions[activeSourceIndices[i]] = _soundSources[activeSourceIndices[i]].transform.position;
-                    _newSourcePositions[activeSourceIndices[i]] = closestNode.position;
-                    _elapsedFrames = 0;
-                }
-                var virtualSourcePos = listenerPos + (Vector3)(closestNode.direction * graphDOTS.nodes[resultsFCNIJob[i]].totalAttenuation);
-                _soundSources[activeSourceIndices[i]].transform.position = 
-                    Vector3.Lerp(_oldSourcePositions[activeSourceIndices[i]], virtualSourcePos, Mathf.Clamp01((float)_elapsedFrames / _interpolationFramesCount));
-                _elapsedFrames++;
-
-                if (GraphNodeRenderer.Instance.renderShortestPaths) //get the shortest path for this source-listener pair
-                    shortestPathsPositions.Add(GetShortestPath(graphDOTS, resultsFCNIJob[i]));
-            }
-
-            #endregion
-
-            //Visualize nodes closest to source positions
-            if (GraphNodeRenderer.Instance.renderClosestNodes)
-            {
-                List<Vector3> positions = new List<Vector3>();
-                for (int i = 0; i < activeSourceIndices.Count; i++)
-                    positions.Add(_nodesDOTS[resultsFCNIJob[i]].position);
-                GraphNodeRenderer.Instance.SetSourcePositions(positions);
-            }
-
-            //Visualize shortest path found by dijkstra
-            if (GraphNodeRenderer.Instance.renderShortestPaths)
-                GraphNodeRenderer.Instance.VisualizeShortestPath(shortestPathsPositions, listenerPos);
-
-            //Dispose native arrays from sound sources FindClosestNodeIdxJob
-            closeNodesSources.Dispose();
-            sourcePositions.Dispose();
-            resultsFCNIJob.Dispose();
-
-            //reset _nodes array for next frame
-            _clearHandle = new ResetNodesArray {nodes = _nodesDOTS}.Schedule(_nodesDOTS.Length, 1);
-            
-            Debug.Log("Time: " + _watch.Elapsed.TotalMilliseconds + "ms");
+            //dispose all native objects
+            _nodesDOTS.Dispose();
+            _edgesDOTS.Dispose();
+            _neighboursIndices.Dispose();
         }
 
         private bool GetSteamAudioDSP(out DSP steamSpatializer, int sourceIndex)
@@ -249,19 +260,6 @@ namespace GraphAudio
             return !steamSpatializer.Equals(default(DSP));
         }
 
-        private void OnDisable()
-        {
-            //wait for jobs to finish
-            _pathHandle.Complete();
-            _clearHandle.Complete();
-
-            //dispose all native objects
-            _nodesDOTS.Dispose();
-            _edgesDOTS.Dispose();
-            _neighboursIndices.Dispose();
-            
-            _watch.Stop();
-        }
 
         /// <summary>
         /// Iterates from the node at soundSourceNodeIndex towards the node closest to the listener
@@ -318,7 +316,7 @@ namespace GraphAudio
         public void AddSoundSource(FMODUnity.StudioEventEmitter source)
         {
             _soundSources.Add(source);
-            _oldSourcePositions.Add(_soundSources.Count-1, Vector3.zero);
+            _oldSourcePositions.Add(_soundSources.Count-1, source.transform.position);
             _newSourcePositions.Add(_soundSources.Count-1, Vector3.zero);
         }
 
@@ -387,6 +385,23 @@ namespace GraphAudio
             edgesDOTS = new NativeArray<EdgeDOTS>(edges.ToArray(), Allocator.Persistent);
         }
 
+        private IEnumerator CalcEdgesOcclusion()
+        {
+            yield return new WaitForSeconds(5);
+            foreach (var edge in _graph.AllEdges)
+            {
+                _fmodAudioListener.transform.position = edge._target._location;
+                _soundSources[0].transform.position = edge._origin._location;
+                yield return new WaitForEndOfFrame();
+                var output = _soundSources[0].gameObject.GetComponent<SteamAudioSource>().GetOutputs(SimulationFlags.Direct).direct;
+                float occlusionFactor = 1.0f - output.occlusion;
+                edge._occlusionFloat = (edge._occlusionFloat + occlusionFactor) / 2.0f;
+                edge._occlusion = Convert.ToByte(Math.Max(0, Math.Min(255, (int)Math.Floor(edge._occlusionFloat * 256.0))));
+            }
+            Debug.Log("GraphAudio: Occlusion calculation finished.");
+            AssetDatabase.SaveAssets();
+        }
+        
         /// <summary>
         /// Unity Job to find the node closest to position. Each position will have its closest node with the same Index in closestNodeIdx-array
         /// </summary>

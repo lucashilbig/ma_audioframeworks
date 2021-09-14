@@ -750,6 +750,14 @@ PrefabInstance:
       propertyPath: reflections
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5551820986620258711, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
+      propertyPath: transmission
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5551820986620258711, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
+      propertyPath: occlusionType
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6167083184908972666, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
       propertyPath: m_RootOrder
       value: 4
@@ -812,7 +820,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8868303603381084028, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
       propertyPath: Event
-      value: event:/CantinaBandGraphAudio
+      value: event:/CantinaBandSteamAudio
       objectReference: {fileID: 0}
     - target: {fileID: 8868303603381084028, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
       propertyPath: PlayEvent
@@ -2686,6 +2694,10 @@ PrefabInstance:
     - target: {fileID: 617306817245570820, guid: 487d7aae063a1d342ab50ded75364245, type: 3}
       propertyPath: m_Name
       value: GraphAudio
+      objectReference: {fileID: 0}
+    - target: {fileID: 617306818689878202, guid: 487d7aae063a1d342ab50ded75364245, type: 3}
+      propertyPath: _audioFramework
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 487d7aae063a1d342ab50ded75364245, type: 3}

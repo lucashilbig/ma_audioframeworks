@@ -37,7 +37,7 @@ namespace GraphAudio
             AssetDatabase.SaveAssets();
         }
 
-        [MenuItem("Window/Graph Audio/AddNodeLayerOnTop")]
+        //[MenuItem("Window/Graph Audio/AddNodeLayerOnTop")]
         public static void AddNodeLayerOnTop()
         {
             var graph = (Graph) AssetDatabase.LoadAssetAtPath("Assets/GraphAudio/GraphProjectAcousticsDemo.asset", typeof(Graph));
@@ -120,7 +120,7 @@ namespace GraphAudio
             AssetDatabase.SaveAssets();
         }
 
-        [MenuItem("Window/Graph Audio/CreateAllEdges")]
+        //[MenuItem("Window/Graph Audio/CreateAllEdges")]
         public static void CreateAllEdges()
         {
             var graph = (Graph) AssetDatabase.LoadAssetAtPath("Assets/GraphAudio/GraphProjectAcousticsDemo.asset", typeof(Graph));
@@ -131,6 +131,18 @@ namespace GraphAudio
                 AssetDatabase.ForceReserializeAssets(new List<string>() {"Assets/GraphAudio/GraphProjectAcousticsDemo.asset"});
             AssetDatabase.SaveAssets();
         }
+        
+        [MenuItem("Window/Graph Audio/Calc Occlusion")]
+        public static void CalcOccl()
+        {
+            if (!Application.isPlaying)
+                return;
+            
+            var graph = (Graph) AssetDatabase.LoadAssetAtPath("Assets/GraphAudio/GraphProjectAcousticsDemo.asset", typeof(Graph));
+
+            graph.CalcOcclusionAllEdges("Assets/GraphAudio/GraphProjectAcousticsDemo.asset");
+
+        }
 
         /// <summary>
         /// Usage: Create GameObject "BoundsHighNode" with UniformGridGizmoRenderer-Component and move the BB around the Nodes that should be
@@ -139,12 +151,12 @@ namespace GraphAudio
         [MenuItem("Window/Graph Audio/Cleanup High Nodes")]
         public static void CleanHighNodes()
         {
-            var graph = (Graph) AssetDatabase.LoadAssetAtPath("Assets/GraphAudio/GraphProjectAcousticsDemo.asset", typeof(Graph));
-            var boundsGameObject = GameObject.Find("BoundsHighNode");
-            var gridBounds = new Bounds(boundsGameObject.transform.position, boundsGameObject.transform.localScale);
-
-            var count = graph.Nodes.RemoveAll(x => gridBounds.Contains(x._location) && x._location.y > 5.0f);
-            Debug.Log("Removed Nodes: " + count);
+            // var graph = (Graph) AssetDatabase.LoadAssetAtPath("Assets/GraphAudio/GraphProjectAcousticsDemo.asset", typeof(Graph));
+            // var boundsGameObject = GameObject.Find("BoundsHighNode");
+            // var gridBounds = new Bounds(boundsGameObject.transform.position, boundsGameObject.transform.localScale);
+            //
+            // var count = graph.Nodes.RemoveAll(x => gridBounds.Contains(x._location) && x._location.y > 5.0f);
+            // Debug.Log("Removed Nodes: " + count);
 
             if (!Application.isPlaying)
                 AssetDatabase.ForceReserializeAssets(new List<string>() {"Assets/GraphAudio/GraphProjectAcousticsDemo.asset"});

@@ -129,35 +129,30 @@ namespace GraphAudio
             //create new steamAudio simulator and load scene into it
             Context context = new Context();
             var settings = SteamAudioManager.GetSimulationSettings(false);
+            
             settings.flags = SimulationFlags.Direct;
             var simulator = new Simulator(context, settings);
-            var scene = new Scene(context, SteamAudio.SceneType.Default, null, null, 
-                SteamAudioManager.ClosestHit, SteamAudioManager.AnyHit);
+            var scene = SteamAudioManager.CurrentScene;
             scene.Commit();
             simulator.SetScene(scene);
             simulator.Commit();
             
             //Iterate over all Nodes and edges
-            Parallel.ForEach(Nodes, node =>
+            foreach (var node in Nodes)
             {
-                new ParallelOptions//Use 75% of available cpu resources
+                foreach (var edge in node.Neighbors)
                 {
-                    MaxDegreeOfParallelism = Convert.ToInt32(Math.Ceiling((Environment.ProcessorCount * 0.75) * 2.0))
-                };
-
-                Parallel.ForEach(node.Neighbors, edge =>
-                {
-                    new ParallelOptions//Use 75% of available cpu resources
-                    {
-                        MaxDegreeOfParallelism = Convert.ToInt32(Math.Ceiling((Environment.ProcessorCount * 0.75) * 2.0))
-                    };
-
-                    float occlusionFactor = 1.0f - CalcOcclusionSteamAudio(simulator, node._location, edge._target._location);//since in steamAudio 1.0f occlusion factor means no occlusion at all
+                    if(edge._target == node)
+                        continue;
+                    
+                    float occlusionFactor = 1.0f - CalcOcclusionSteamAudio(simulator, node._location,
+                          edge._target._location);//since in steamAudio 1.0f occlusion factor means no occlusion at all
                     edge._occlusionFloat = occlusionFactor;
                     edge._occlusion = Convert.ToByte(Math.Max(0, Math.Min(255, (int)Math.Floor(occlusionFactor * 256.0))));
-                });
-            });
+                }
+            }
 
+            Debug.Log("GraphAudio: Occlusion calculation finished.");
             if(!Application.isPlaying)
                 AssetDatabase.ForceReserializeAssets(new List<string>() { assetPath });
             AssetDatabase.SaveAssets();
