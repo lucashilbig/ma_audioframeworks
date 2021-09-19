@@ -34,6 +34,7 @@ namespace GraphAudio
             return node;
         }
 
+        #if UNITY_EDITOR
         public Edge AddEdge(Node target)
         {
             Edge edge = Edge.Create(target, this);
@@ -44,6 +45,7 @@ namespace GraphAudio
             AssetDatabase.AddObjectToAsset(edge, this);
             return edge;
         }
+        #endif
         
         public override bool Equals(object obj)
         {

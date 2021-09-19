@@ -9,6 +9,7 @@ public class PulseToAudio : MonoBehaviour
     [Range(0, 7)]
     public int _band;
     public float _scaleMultiplier, _scalingRate;
+    public bool _useParentTransform;
 
     AudioSource _audioSource;
     static float[] _samples = new float[512];
@@ -19,7 +20,7 @@ public class PulseToAudio : MonoBehaviour
     void Start()
     {
         _audioSource = GetComponent<AudioSource>();
-        _baseScale = transform.localScale;
+        _baseScale = _useParentTransform ? transform.parent.localScale : transform.localScale;
     }
 
     // Update is called once per frame
@@ -32,7 +33,10 @@ public class PulseToAudio : MonoBehaviour
         //Change Object scale
         Vector3 scale = new Vector3((_freqBand[_band] * _scaleMultiplier) + _baseScale.x, 
             (_freqBand[_band] * _scaleMultiplier) + _baseScale.y, (_freqBand[_band] * _scaleMultiplier) + _baseScale.z);
-        transform.localScale = Vector3.Lerp(transform.localScale, scale, _scalingRate * Time.deltaTime);
+        if(_useParentTransform)
+            transform.parent.localScale = Vector3.Lerp(transform.parent.localScale, scale, _scalingRate * Time.deltaTime);
+        else
+            transform.localScale = Vector3.Lerp(transform.localScale, scale, _scalingRate * Time.deltaTime);
     }
 
     void MakeFrequencyBands()

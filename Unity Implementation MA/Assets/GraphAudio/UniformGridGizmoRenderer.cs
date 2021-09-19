@@ -13,6 +13,7 @@ public class UniformGridGizmoRenderer : MonoBehaviour
 
     private void OnDrawGizmos()
     {
+#if UNITY_EDITOR
         if(_renderGridCells)
         {
             Gizmos.color = Color.cyan;
@@ -64,7 +65,7 @@ public class UniformGridGizmoRenderer : MonoBehaviour
         }
         Gizmos.color = Color.green;
         Gizmos.DrawWireCube(transform.position, transform.localScale);
-
+#endif
     }
 
     private void OnValidate()

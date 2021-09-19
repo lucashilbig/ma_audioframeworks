@@ -47,11 +47,13 @@ namespace GraphAudio
             private set => allEdges = value;
         }
 
+#if UNITY_EDITOR
         public static Graph Create(string name)
         {
             Graph graph = CreateInstance<Graph>();
 
             string path = string.Format("Assets/GraphAudio/{0}.asset", name);
+            
             AssetDatabase.CreateAsset(graph, path);
 
             return graph;
@@ -229,7 +231,7 @@ namespace GraphAudio
 
             return occlusionValue;
         }
-
+#endif
     }
 
     [BurstCompile]

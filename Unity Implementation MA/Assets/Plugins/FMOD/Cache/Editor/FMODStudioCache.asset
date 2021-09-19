@@ -246,10 +246,30 @@ MonoBehaviour:
   Is3D: 1
   IsOneShot: 0
   Parameters:
-  - {fileID: 1960742015755131855}
+  - {fileID: -4449576631252760640}
   MinDistance: 0
   MaxDistance: 0
   Length: 36075
+--- !u!114 &-5794316445259636103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/CantinaBandGraphAudio/Occlusion
+  m_EditorClassIdentifier: 
+  Name: Occlusion
+  Min: 0
+  Max: 1
+  Default: 1
+  ID:
+    data1: 0
+    data2: 0
+  Exists: 0
 --- !u!114 &-5545518523774768057
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -350,6 +370,26 @@ MonoBehaviour:
     data1: 0
     data2: 0
   Exists: 0
+--- !u!114 &-4449576631252760640
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/CantinaBandGraphAudio/Occlusion
+  m_EditorClassIdentifier: 
+  Name: Occlusion
+  Min: 0
+  Max: 1
+  Default: 1
+  ID:
+    data1: 0
+    data2: 0
+  Exists: 1
 --- !u!114 &-4407696314881872962
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -370,6 +410,26 @@ MonoBehaviour:
     data1: 0
     data2: 0
   Exists: 0
+--- !u!114 &-4307516752717894910
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/CantinaBandGraphAudio/Occlusion
+  m_EditorClassIdentifier: 
+  Name: Occlusion
+  Min: 0
+  Max: 1
+  Default: 1
+  ID:
+    data1: 0
+    data2: 0
+  Exists: 1
 --- !u!114 &-4189801417164622138
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -446,6 +506,26 @@ MonoBehaviour:
   Min: 0
   Max: 150
   Default: 0
+  ID:
+    data1: 0
+    data2: 0
+  Exists: 1
+--- !u!114 &-3446565018638640059
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/footstepsGraphAudio/Occlusion
+  m_EditorClassIdentifier: 
+  Name: Occlusion
+  Min: 0
+  Max: 1
+  Default: 1
   ID:
     data1: 0
     data2: 0
@@ -576,6 +656,30 @@ MonoBehaviour:
   MinDistance: 0
   MaxDistance: 0
   Length: 36075
+--- !u!114 &-2173786184427159194
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/footstepsGraphAudio
+  m_EditorClassIdentifier: 
+  Path: event:/footstepsGraphAudio
+  guid: 428a9b88fe378746926ac09ee1846270
+  Banks:
+  - {fileID: 9150446931955115607}
+  IsStream: 0
+  Is3D: 1
+  IsOneShot: 0
+  Parameters:
+  - {fileID: -3446565018638640059}
+  MinDistance: 0
+  MaxDistance: 0
+  Length: 3203
 --- !u!114 &-1925200988362363928
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -760,7 +864,7 @@ MonoBehaviour:
   IsOneShot: 0
   Parameters: []
   MinDistance: 1
-  MaxDistance: 150
+  MaxDistance: 50
   Length: 36075
 --- !u!114 &-84227529587187951
 MonoBehaviour:
@@ -805,12 +909,14 @@ MonoBehaviour:
   - {fileID: -2480070895784136840}
   - {fileID: -1925200988362363928}
   - {fileID: -5867018250794537631}
+  - {fileID: -2173786184427159194}
+  - {fileID: 4699859227913395930}
   EditorParameters: []
   MasterBanks:
   - {fileID: 9150446931955115607}
   StringsBanks:
   - {fileID: 1445457674666459547}
-  stringsBankWriteTime: 637667417838223221
+  stringsBankWriteTime: 637672455936948835
   cacheVersion: 6
 --- !u!114 &246308326604506621
 MonoBehaviour:
@@ -873,7 +979,7 @@ MonoBehaviour:
   IsOneShot: 0
   Parameters: []
   MinDistance: 1
-  MaxDistance: 100
+  MaxDistance: 50
   Length: 249364
 --- !u!114 &1395461494138513278
 MonoBehaviour:
@@ -910,11 +1016,11 @@ MonoBehaviour:
   Path: ../../FMOD/MA_UnityDust2/Build/Desktop/Master.strings.bank
   Name: Master.strings
   StudioPath: bank:/Master.strings
-  lastModified: 637667417838223221
+  lastModified: 637672455936948835
   LoadResult: 0
   FileSizes:
   - Name: Desktop
-    Value: 1084
+    Value: 1166
   Exists: 1
 --- !u!114 &1708747656890486160
 MonoBehaviour:
@@ -1222,6 +1328,30 @@ MonoBehaviour:
     data1: 0
     data2: 0
   Exists: 1
+--- !u!114 &4699859227913395930
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb653cd98e289a4e8697a1af55201f2, type: 3}
+  m_Name: event:/WeAreGraphAudio
+  m_EditorClassIdentifier: 
+  Path: event:/WeAreGraphAudio
+  guid: 77b82e3fa4c0cb40a3b751fe5763b01e
+  Banks:
+  - {fileID: 9150446931955115607}
+  IsStream: 1
+  Is3D: 1
+  IsOneShot: 0
+  Parameters:
+  - {fileID: 6902635707218201797}
+  MinDistance: 0
+  MaxDistance: 0
+  Length: 248364
 --- !u!114 &4736082594003408677
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1263,7 +1393,7 @@ MonoBehaviour:
   IsOneShot: 0
   Parameters: []
   MinDistance: 1
-  MaxDistance: 100
+  MaxDistance: 50
   Length: 3203
 --- !u!114 &5312814546335394148
 MonoBehaviour:
@@ -1356,6 +1486,26 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
   m_Name: parameter:/CantinaBandGraphAudioTest/Occlusion
+  m_EditorClassIdentifier: 
+  Name: Occlusion
+  Min: 0
+  Max: 1
+  Default: 1
+  ID:
+    data1: 0
+    data2: 0
+  Exists: 1
+--- !u!114 &6902635707218201797
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fecb8ef7f94ca804a8ab72049b86782e, type: 3}
+  m_Name: parameter:/WeAreGraphAudio/Occlusion
   m_EditorClassIdentifier: 
   Name: Occlusion
   Min: 0
@@ -1520,7 +1670,7 @@ MonoBehaviour:
   Path: ../../FMOD/MA_UnityDust2/Build/Desktop/Master.bank
   Name: Master
   StudioPath: bank:/Master
-  lastModified: 637667417838183326
+  lastModified: 637672455936928892
   LoadResult: 0
   FileSizes: []
   Exists: 1

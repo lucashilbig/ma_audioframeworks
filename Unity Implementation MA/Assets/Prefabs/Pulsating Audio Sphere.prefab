@@ -11,7 +11,6 @@ GameObject:
   - component: {fileID: 3346550605137649549}
   - component: {fileID: 8868303603381084028}
   - component: {fileID: 5551820986620258711}
-  - component: {fileID: 7490526530045595293}
   - component: {fileID: 2833741648731396173}
   m_Layer: 0
   m_Name: Audio Components
@@ -85,11 +84,11 @@ MonoBehaviour:
   directivityValue: 1
   occlusion: 1
   occlusionInput: 0
-  occlusionType: 0
+  occlusionType: 1
   occlusionRadius: 1
-  occlusionSamples: 16
+  occlusionSamples: 32
   occlusionValue: 1
-  transmission: 1
+  transmission: 0
   transmissionType: 0
   transmissionInput: 0
   transmissionLow: 1
@@ -136,22 +135,6 @@ MonoBehaviour:
   - 0
   applyHRTFToPathing: 0
   pathingMixLevel: 1
---- !u!114 &7490526530045595293
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2978895592016112219}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 54732c5090cafad45b5e052f1e139673, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _band: 4
-  _scaleMultiplier: 2
-  _scalingRate: 10
-  _useParentTransform: 1
 --- !u!114 &2833741648731396173
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -177,7 +160,7 @@ GameObject:
   - component: {fileID: 6167083184908972668}
   m_Layer: 0
   m_Name: Pulsating Audio Sphere
-  m_TagString: Untagged
+  m_TagString: FmodBase
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

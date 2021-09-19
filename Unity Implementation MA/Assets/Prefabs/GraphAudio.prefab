@@ -817,6 +817,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb4cebfd6e89c1b49a019ffab236fc77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  nodesSize: {x: 0.5, y: 0.5, z: 0.5}
   renderNodesGizmo: 1
   renderNodeNamesGizmo: 0
   renderEdgesGizmo: 0
@@ -1469,6 +1470,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 9a7222d9236559f4592969b97b97b43e, type: 3}
   _graphAudioManager: {fileID: 617306817889840667}
   _audioPrefab: {fileID: 6167083184908972671, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
+  _audioAcousticsPrefab: {fileID: 0}
   _guesserPrefab: {fileID: 3142155569847162160, guid: 6475dd8e932a4f947bed4b7a651cd0ba, type: 3}
   _linePrefab: {fileID: 8088329533799030210, guid: 934f71183311e33478b4575cd383bf20, type: 3}
   _playerCamera: {fileID: 617306818972635436}
@@ -1565,7 +1567,7 @@ GameObject:
   - component: {fileID: 617306818972635433}
   m_Layer: 0
   m_Name: Main Camera
-  m_TagString: Untagged
+  m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

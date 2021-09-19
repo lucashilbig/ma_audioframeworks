@@ -5,8 +5,11 @@ using System.Collections;
 using System.Diagnostics;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using GraphAudio;
+using SteamAudio;
 using UnityEngine.SceneManagement;
+using Vector3 = UnityEngine.Vector3;
 
 public enum AudioFramework
 {
@@ -16,12 +19,15 @@ public enum AudioFramework
 public class GameLogic : MonoBehaviour
 {
     [Header("Settings")] public AudioFramework _audioFramework; //currently used audio Framework
+    public bool _logResults;
     public bool _audioSourceVisible;
     public bool _showDebugUI;
     public AudioClip[] _audioClips;
 
     [Header("References")] public GameObject _graphAudioManager;
+    public GameObject _acousticsAudioManager;
     public GameObject _audioPrefab;
+    public GameObject _audioAcousticsPrefab;
     public GameObject _guesserPrefab;
     public GameObject _linePrefab;
     public GameObject _playerCamera;
@@ -30,7 +36,7 @@ public class GameLogic : MonoBehaviour
     public TextMeshProUGUI _scoreTextTmp;
     public TextMeshProUGUI _timeTextTmp;
 
-    private GameObject _currAudioObj; //currently active instance of _audioPrefab
+    private GameObject _currAudioObj; //currently active instance of _audioPrefab or _audioAcousticsPrefab;
     private GameObject _currGuesserObj; //currently active instance of _guesserPrefab
     private GameObject _currLineObj; //currently active instance of _linePrefab
     private GameObject[] _debugUIObjs;
@@ -40,7 +46,8 @@ public class GameLogic : MonoBehaviour
     private bool _enableGuessing; //if set to false, you cant spawn guess objects with left click
     private bool _guessFinished; //set to true after MakeGuess(), so we only calculate guess once
     private static bool _isGameFocused = true;
-
+    
+    
     public static bool IsGameFocused()
     {
         return _isGameFocused;
@@ -58,24 +65,20 @@ public class GameLogic : MonoBehaviour
         _guessFinished = true;
         _stopwatch = new Stopwatch();
         _objPositions = GetSceneSourcePositions(SceneManager.GetActiveScene().name);
-
-        if (_audioFramework != AudioFramework.GraphAudio)
-            _graphAudioManager.GetComponent<GraphAudioManager>().enabled = false;
-        else
-            _graphAudioManager.GetComponent<GraphAudioManager>().enabled = true;
-
     }
 
     void Start()
     {
+        SetAudioFramework(_audioFramework);
+
+        #region UI
+
         _debugUIObjs = GameObject.FindGameObjectsWithTag("DebugUI");
 
         if (!_showDebugUI)
             foreach (GameObject obj in _debugUIObjs)
                 obj.SetActive(false);
-
-        #region UI
-
+        
         if (_audioSourceVisible)
             _audioVisibleText.text = "Audio Visible: On";
         else
@@ -91,6 +94,7 @@ public class GameLogic : MonoBehaviour
 
         #endregion
     }
+
 
     // Update is called once per frame
     void Update()
@@ -164,11 +168,12 @@ public class GameLogic : MonoBehaviour
         _idxCurrPos = newIdx;
 
         //instantiate new audio source gameObject
-        _currAudioObj = Instantiate(_audioPrefab, _objPositions[_idxCurrPos], Quaternion.identity);
+        _currAudioObj = Instantiate(_audioFramework == AudioFramework.ProjectAcoustics 
+            ? _audioAcousticsPrefab : _audioPrefab, _objPositions[_idxCurrPos], Quaternion.identity);
         _currAudioObj.GetComponent<MeshRenderer>().enabled = _audioSourceVisible;
 
         //set audioClip on the new gameObject and activate object
-        SetAudioClipOnObj(_currAudioObj, _audioClips[_idxCurrClip]);
+        SetAudioClipOnObj(ref _currAudioObj, _audioClips[_idxCurrClip]);
 
         //enable guessing
         _enableGuessing = true;
@@ -184,7 +189,7 @@ public class GameLogic : MonoBehaviour
 
         //Change clip in current audio gameObject
         if (_currAudioObj != null)
-            SetAudioClipOnObj(_currAudioObj, _audioClips[_idxCurrClip]);
+            SetAudioClipOnObj(ref _currAudioObj, _audioClips[_idxCurrClip]);
 
         //UI text
         _audioClipText.text = "Audio Clip: " + _audioClips[_idxCurrClip].name;
@@ -192,7 +197,7 @@ public class GameLogic : MonoBehaviour
 
     private void ToggleVisibilityAudioObj()
     {
-        _audioSourceVisible = (_audioSourceVisible) ? false : true;
+        _audioSourceVisible = !_audioSourceVisible;
 
         if (_audioSourceVisible)
         {
@@ -223,22 +228,30 @@ public class GameLogic : MonoBehaviour
             Destroy(_currGuesserObj);
 
         //instantiate new guesser gameObject in front of player
-        Vector3 spawnPos = _playerCamera.transform.position + _playerCamera.transform.forward * 5.0f; // spawn Distance 5
+        Vector3 spawnPos = _playerCamera.transform.position + _playerCamera.transform.forward * 4.0f; // spawn Distance 5
         _currGuesserObj = Instantiate(_guesserPrefab, spawnPos, _playerCamera.transform.rotation);
     }
 
     private void MakeGuess()
     {
-        //TODO: Logging der Ergebnisse f�r Evaluation
         _enableGuessing = false;
         _guessFinished = true;
 
         //stop stopwatch and refresh text
         _stopwatch.Stop();
-        _timeTextTmp.text = _stopwatch.Elapsed.ToString(@"mm\:ss\.f");
+        var elapsedTime = _stopwatch.Elapsed.ToString(@"mm\:ss\.f");
+        _timeTextTmp.text = elapsedTime;
 
         //calculate distance between audio source obj and guess
         float distance = Vector3.Distance(_currAudioObj.transform.position, _currGuesserObj.transform.position);
+        
+        //log results
+        if (_logResults)
+            using (StreamWriter sw = File.AppendText(GetLogPath()))
+            {
+                sw.WriteLine(DateTime.Now.ToShortTimeString() + " -- POSITION: " + _idxCurrPos +
+                             " -- DISTANZ: " + distance.ToString("0.0") + " -- ZEIT: " + elapsedTime);
+            }
 
         //set score and make it show with pulse animation
         _scoreTextTmp.text = "Distanz" + Environment.NewLine + distance.ToString("0.0");
@@ -253,10 +266,17 @@ public class GameLogic : MonoBehaviour
         line.SetPosition(1, _currGuesserObj.transform.position);
     }
 
-    private void SetAudioClipOnObj(GameObject obj, AudioClip clip)
+    private void SetAudioClipOnObj(ref GameObject obj, AudioClip clip)
     {
         if (_audioFramework == AudioFramework.FMOD || _audioFramework == AudioFramework.GraphAudio)
         {
+            if (obj.CompareTag("AcousticsBase"))
+            {
+                Destroy(obj);
+                obj = Instantiate(_audioPrefab, _objPositions[_idxCurrPos], Quaternion.identity);
+                obj.GetComponent<MeshRenderer>().enabled = _audioSourceVisible;
+            }
+                
             var eventEmitter = obj.GetComponentInChildren<FMODUnity.StudioEventEmitter>();
             eventEmitter.ChangeEvent(GetFmodEventByName(clip.name));
             eventEmitter.Play();
@@ -264,24 +284,35 @@ public class GameLogic : MonoBehaviour
         else if (_audioFramework == AudioFramework.SteamAudio)
         {
             //We need to create a new gameObject instance otherwise Steam Audio will be buggy
-            if (_currAudioObj != null)
-                Destroy(_currAudioObj);
-            _currAudioObj = Instantiate(_audioPrefab, _objPositions[_idxCurrPos], Quaternion.identity);
-            _currAudioObj.GetComponent<MeshRenderer>().enabled = _audioSourceVisible;
+            if (obj != null)
+                Destroy(obj);
+            obj = Instantiate(_audioPrefab, _objPositions[_idxCurrPos], Quaternion.identity);
+            obj.GetComponent<MeshRenderer>().enabled = _audioSourceVisible;
 
             //Set audioclip/Event
-            var eventEmitter = _currAudioObj.GetComponentInChildren<FMODUnity.StudioEventEmitter>();
+            var eventEmitter = obj.GetComponentInChildren<FMODUnity.StudioEventEmitter>();
             eventEmitter.ChangeEvent(GetFmodEventByName(clip.name));
 
             //TODO: Test if still needed after update to steamAudio 4.0
-            Destroy(_currAudioObj.GetComponentInChildren<SteamAudio.SteamAudioSource>()); //Steam Audio doesnt work otherwise
-            _currAudioObj.transform.GetChild(0).gameObject.AddComponent<SteamAudio.SteamAudioSource>();
+            Destroy(obj.GetComponentInChildren<SteamAudio.SteamAudioSource>()); //Steam Audio doesnt work otherwise
+            var steamAudioSource = obj.transform.GetChild(0).gameObject.AddComponent<SteamAudio.SteamAudioSource>();
+            steamAudioSource.occlusion = true;
+            steamAudioSource.occlusionType = OcclusionType.Volumetric;
+            steamAudioSource.occlusionSamples = 32;
+            steamAudioSource.transmission = true;
+            steamAudioSource.reflections = true;
 
             eventEmitter.Play();
         }
         else if (_audioFramework == AudioFramework.ProjectAcoustics)
         {
-            AudioSource source = obj.GetComponent<AudioSource>();
+            if (obj.CompareTag("FmodBase"))
+            {
+                Destroy(obj);
+                obj = Instantiate(_audioAcousticsPrefab, _objPositions[_idxCurrPos], Quaternion.identity);
+                obj.GetComponent<MeshRenderer>().enabled = _audioSourceVisible;
+            }
+            var source = obj.GetComponentInChildren<AudioSource>();
             source.Stop();
             source.clip = clip;
             source.Play();
@@ -303,6 +334,40 @@ public class GameLogic : MonoBehaviour
                 return "event:/footsteps" + affix;
             else
                 return "event:/CantinaBand" + affix;
+        }
+    }
+
+    private void SetAudioFramework(AudioFramework audioFramework)
+    {
+        _audioFramework = audioFramework;
+
+        switch (_audioFramework)
+        {
+            case AudioFramework.FMOD:
+                _acousticsAudioManager.SetActive(false);
+                _graphAudioManager.SetActive(false);
+                SetAudioClipOnObj(ref _currAudioObj, _audioClips[_idxCurrClip]);
+                break;
+            case AudioFramework.SteamAudio:
+                _acousticsAudioManager.SetActive(false);
+                _graphAudioManager.SetActive(false);
+                SetAudioClipOnObj(ref _currAudioObj, _audioClips[_idxCurrClip]);
+                break;
+            case AudioFramework.GraphAudio:
+                _acousticsAudioManager.SetActive(false);
+                _graphAudioManager.SetActive(true);
+                SetAudioClipOnObj(ref _currAudioObj, _audioClips[_idxCurrClip]);
+                break;
+            case AudioFramework.ProjectAcoustics:
+                _acousticsAudioManager.SetActive(true);
+                _graphAudioManager.SetActive(false);
+                SetAudioClipOnObj(ref _currAudioObj, _audioClips[_idxCurrClip]);
+                break;
+            default:
+                _acousticsAudioManager.SetActive(false);
+                _graphAudioManager.SetActive(false);
+                SetAudioClipOnObj(ref _currAudioObj, _audioClips[_idxCurrClip]);
+                break;
         }
     }
 
@@ -373,7 +438,29 @@ public class GameLogic : MonoBehaviour
             };
         if (sceneName.Equals("ProjectAcousticsDemo"))
             return new[]
-                { new Vector3(0.0f, 0.0f, 0.0f) };
+                { new Vector3(6.1f,1.58f,-20.62f), new Vector3(10.18f,1.58f,-37.17f), new Vector3(16.79f,1.58f,-20.09f), new Vector3(2.79f,1.58f,0.2f), 
+                    new Vector3(-12.6f,1.58f,-12.25f), new Vector3(-14.07f,0.74f,-37.03f), new Vector3(-25.527f,2.748f,-65f), new Vector3(-30.52f,-2.14f,-66.42f),
+                    new Vector3(-43.63f,1.79f,-94.6f), new Vector3(10.73f,-0.252f,-62.763f), new Vector3(-4.852f,-11.627f,-58.998f), new Vector3(10.261f,-16.608f,-66.23f),
+                    new Vector3(3.522f,-7.632f,-70.471f), new Vector3(35.179f,-0.285f,-54.427f), new Vector3(50.48f,-1.214f,-70.51f), new Vector3(64.731f,2.509f,-84.773f),
+                    new Vector3(49.387f,1.082f,-15.947f), new Vector3(58.234f,5.401f,-15.947f), new Vector3(64.34f,10.59f,-19.08f), new Vector3(32.791f,-0.326f,8.006f),
+                    new Vector3(26.845f,8.9f,3.661f), new Vector3(21.745f,11.305f,18.161f), new Vector3(1.807f,3.396f,29.594f), new Vector3(1.25f,6.152f,23.609f),
+                    new Vector3(-0.803f,7.34f,41.145f), new Vector3(-26.863f,1.35f,8.555f), new Vector3(-33.451f,7.42f,17.973f), new Vector3(-35.67f,0.845f,31.522f),
+                    new Vector3(-36.96f,7.438f,40.47f), new Vector3(-41.255f,-1.592f,-9.253f), new Vector3(-54.763f,-6.21f,-17.361f), new Vector3(-69.362f,-6.698f,8.647f),
+                    new Vector3(-62.308f,-3.421f,-4.185f), new Vector3(-41.81f,1.036f,-38.435f), new Vector3(-53.048f,-2.789f,-45.164f), new Vector3(-51.76f,9.398f,-48.6f),
+                    new Vector3(-67.213f,1.91f,-32.59f)};
         return null;
+    }
+
+    private string GetLogPath()
+    {
+        string path;
+        path = Application.isEditor ? Directory.GetParent(Application.dataPath).FullName : Application.dataPath;
+        path = Path.Combine(path, "Logs", "EvaluationData");
+
+        if (!Directory.Exists(path))
+            Directory.CreateDirectory(path);
+
+        path = Path.Combine(path, "results_" + DateTime.Today.ToString("dd_MM") + ".txt");
+        return path;
     }
 }

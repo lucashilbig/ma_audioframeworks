@@ -35,7 +35,7 @@ namespace GraphAudio
         private Vector3 _oldListenerPos = new Vector3(0.0f, 0.0f, 0.0f);
         private Dictionary<int, Vector3> _oldSourcePositions = new Dictionary<int, Vector3>();
         private Dictionary<int, float3> _newSourcePositions = new Dictionary<int, float3>();
-        private int _interpolationFramesCount = 30; // Number of frames to completely interpolate between 2 positions
+        private int _interpolationFramesCount = 20; // Number of frames to completely interpolate between 2 positions
         private int _elapsedFrames = 0;
         private const int _layerMask = 1 << 6;// Bit shift the index of the map layer (6) to get a bit mask
 
@@ -385,6 +385,7 @@ namespace GraphAudio
             edgesDOTS = new NativeArray<EdgeDOTS>(edges.ToArray(), Allocator.Persistent);
         }
 
+        #if UNITY_EDITOR
         private IEnumerator CalcEdgesOcclusion()
         {
             yield return new WaitForSeconds(5);
@@ -401,6 +402,7 @@ namespace GraphAudio
             Debug.Log("GraphAudio: Occlusion calculation finished.");
             AssetDatabase.SaveAssets();
         }
+        #endif
         
         /// <summary>
         /// Unity Job to find the node closest to position. Each position will have its closest node with the same Index in closestNodeIdx-array
