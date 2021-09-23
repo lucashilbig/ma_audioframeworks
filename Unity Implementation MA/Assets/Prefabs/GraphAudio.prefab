@@ -595,11 +595,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 617306818830547470}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 10, y: -41.47998}
+  m_AnchoredPosition: {x: 10, y: -82.3}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &617306817262206927
@@ -726,8 +726,10 @@ MonoBehaviour:
 
     Left Click - Position Guesser
 
-    Right Click - Submit
-    Guess
+    Enter - Submit Guess
+
+    Escape
+    - Menu
 
     "h" - Toggle Debug UI
 
@@ -1013,11 +1015,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 617306818830547470}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 10, y: -10}
+  m_AnchoredPosition: {x: 10, y: -44.7}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &617306818200243991
@@ -1462,6 +1464,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _audioFramework: 2
+  _logResults: 0
   _audioSourceVisible: 0
   _showDebugUI: 1
   _audioClips:
@@ -1469,11 +1472,13 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 842ef5c9fbe8b0049b090ba477bdd8c0, type: 3}
   - {fileID: 8300000, guid: 9a7222d9236559f4592969b97b97b43e, type: 3}
   _graphAudioManager: {fileID: 617306817889840667}
+  _acousticsAudioManager: {fileID: 0}
   _audioPrefab: {fileID: 6167083184908972671, guid: 51766ebdc4ed25748a56a6bf3f4e753e, type: 3}
   _audioAcousticsPrefab: {fileID: 0}
   _guesserPrefab: {fileID: 3142155569847162160, guid: 6475dd8e932a4f947bed4b7a651cd0ba, type: 3}
   _linePrefab: {fileID: 8088329533799030210, guid: 934f71183311e33478b4575cd383bf20, type: 3}
   _playerCamera: {fileID: 617306818972635436}
+  _menu: {fileID: 0}
   _audioClipText: {fileID: 617306818200243992}
   _audioVisibleText: {fileID: 617306817262206928}
   _scoreTextTmp: {fileID: 617306817052790464}
@@ -1505,6 +1510,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
+  - {fileID: 875136841078668428}
   - {fileID: 617306818200243993}
   - {fileID: 617306817262206929}
   m_Father: {fileID: 617306817032717663}
@@ -1657,3 +1663,82 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   attenuationObject: {fileID: 0}
   ListenerNumber: -1
+--- !u!1 &5372789719183752411
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 875136841078668428}
+  - component: {fileID: 5421499648722961196}
+  - component: {fileID: 7848307302630618469}
+  m_Layer: 7
+  m_Name: AudioFrameworkText
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &875136841078668428
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5372789719183752411}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 617306818830547470}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 10, y: -10}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &5421499648722961196
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5372789719183752411}
+  m_CullTransparentMesh: 1
+--- !u!114 &7848307302630618469
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5372789719183752411}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_FontData:
+    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_FontSize: 25
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 2
+    m_MaxSize: 40
+    m_Alignment: 0
+    m_AlignByGeometry: 0
+    m_RichText: 1
+    m_HorizontalOverflow: 1
+    m_VerticalOverflow: 1
+    m_LineSpacing: 1
+  m_Text: 'Audio Framework: '

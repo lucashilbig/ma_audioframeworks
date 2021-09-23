@@ -31,6 +31,7 @@ public class GameLogic : MonoBehaviour
     public GameObject _guesserPrefab;
     public GameObject _linePrefab;
     public GameObject _playerCamera;
+    public Text _audioFrameworkText;
     public Text _audioClipText;
     public Text _audioVisibleText;
     public TextMeshProUGUI _scoreTextTmp;
@@ -46,12 +47,8 @@ public class GameLogic : MonoBehaviour
     private bool _enableGuessing; //if set to false, you cant spawn guess objects with left click
     private bool _guessFinished; //set to true after MakeGuess(), so we only calculate guess once
     private static bool _isGameFocused = true;
-    
-    
-    public static bool IsGameFocused()
-    {
-        return _isGameFocused;
-    }
+
+    public static bool IsGameFocused() => _isGameFocused;
 
     //Audio Source Object Positions 
     private Vector3[] _objPositions;
@@ -122,19 +119,22 @@ public class GameLogic : MonoBehaviour
 
         #region Key Callbacks
 
-        if (Input.GetKeyDown("1"))
-            NewAudioPositionRnd();
-        if (Input.GetKeyDown("2"))
-            NextAudioClip();
-        if (Input.GetKeyDown("3"))
-            ToggleVisibilityAudioObj();
-        if (Input.GetKeyDown("h"))
-            ToggleDebugUI();
-        if (_enableGuessing && Input.GetMouseButtonDown(0)) // left/primary click. Only spawn new object if guessing is enabled
-            SpawnGuesserObject();
-        if (!_guessFinished && _currAudioObj != null && _currGuesserObj != null && Input.GetKeyDown(KeyCode.Return)) // Enter key. Can only make guess if we have source and guess positions
-            MakeGuess();
-
+        if (!PauseMenu.IsPaused())
+        {
+            if (Input.GetKeyDown("1"))
+                NewAudioPositionRnd();
+            if (Input.GetKeyDown("2"))
+                NextAudioClip();
+            if (Input.GetKeyDown("3"))
+                ToggleVisibilityAudioObj();
+            if (Input.GetKeyDown("h"))
+                ToggleDebugUI();
+            if (_enableGuessing && Input.GetMouseButtonDown(0)) // left/primary click. Only spawn new object if guessing is enabled
+                SpawnGuesserObject();
+            if (!_guessFinished && _currAudioObj != null && _currGuesserObj != null && Input.GetKeyDown(KeyCode.Return)) // Enter key. Can only make guess if we have source and guess positions
+                MakeGuess();
+        }
+        
         #endregion
 
         //update stopwatch text while player looks for source
@@ -268,6 +268,9 @@ public class GameLogic : MonoBehaviour
 
     private void SetAudioClipOnObj(ref GameObject obj, AudioClip clip)
     {
+        if (obj == null)
+            return;
+        
         if (_audioFramework == AudioFramework.FMOD || _audioFramework == AudioFramework.GraphAudio)
         {
             if (obj.CompareTag("AcousticsBase"))
@@ -347,26 +350,31 @@ public class GameLogic : MonoBehaviour
                 _acousticsAudioManager.SetActive(false);
                 _graphAudioManager.SetActive(false);
                 SetAudioClipOnObj(ref _currAudioObj, _audioClips[_idxCurrClip]);
+                _audioFrameworkText.text = "Audio Framework: A";
                 break;
             case AudioFramework.SteamAudio:
                 _acousticsAudioManager.SetActive(false);
                 _graphAudioManager.SetActive(false);
                 SetAudioClipOnObj(ref _currAudioObj, _audioClips[_idxCurrClip]);
+                _audioFrameworkText.text = "Audio Framework: B";
                 break;
             case AudioFramework.GraphAudio:
                 _acousticsAudioManager.SetActive(false);
                 _graphAudioManager.SetActive(true);
                 SetAudioClipOnObj(ref _currAudioObj, _audioClips[_idxCurrClip]);
+                _audioFrameworkText.text = "Audio Framework: C";
                 break;
             case AudioFramework.ProjectAcoustics:
                 _acousticsAudioManager.SetActive(true);
                 _graphAudioManager.SetActive(false);
                 SetAudioClipOnObj(ref _currAudioObj, _audioClips[_idxCurrClip]);
+                _audioFrameworkText.text = "Audio Framework: D";
                 break;
             default:
                 _acousticsAudioManager.SetActive(false);
                 _graphAudioManager.SetActive(false);
                 SetAudioClipOnObj(ref _currAudioObj, _audioClips[_idxCurrClip]);
+                _audioFrameworkText.text = "Audio Framework: A";
                 break;
         }
     }
@@ -451,7 +459,17 @@ public class GameLogic : MonoBehaviour
         return null;
     }
 
-    private string GetLogPath()
+    public void StartTest()
+    {
+        //TODO: IMPLEMENT
+    }
+    
+    public void SelectPosition()
+    {
+        //TODO: IMPLEMENT
+    }
+
+    public static string GetLogPath()
     {
         string path;
         path = Application.isEditor ? Directory.GetParent(Application.dataPath).FullName : Application.dataPath;

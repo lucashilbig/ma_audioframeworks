@@ -22,6 +22,9 @@ public class MouseLookCam : MonoBehaviour
         if(!GameLogic.IsGameFocused())
             return;
 
+        if (PauseMenu.IsPaused())
+            return;
+        
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.fixedDeltaTime;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.fixedDeltaTime;
 
