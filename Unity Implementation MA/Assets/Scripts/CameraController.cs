@@ -16,11 +16,12 @@ public class CameraController : MonoBehaviour
     {
         // Prevent bounces when walking into walls
         GetComponentInParent<Rigidbody>().maxAngularVelocity = 0;
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     void Update ()
     {
-        if (!AcousticsDemoControls.IsGameFocused())
+        if (!GameLogic.IsGameFocused() || PauseMenu.IsPaused())
         {
             transform.parent.transform.rotation = Quaternion.AngleAxis(currentRotation.x, Vector3.up);
             transform.parent.transform.rotation *= Quaternion.AngleAxis(currentRotation.y, Vector3.left);
@@ -46,13 +47,13 @@ public class CameraController : MonoBehaviour
         {
             GetComponentInParent<Rigidbody>().velocity = new Vector3(0, 15, 0);
         }
-        float runSpeed = Input.GetKey(KeyCode.LeftShift) ? 2 : 1;
+        //float runSpeed = Input.GetKey(KeyCode.LeftShift) ? 2 : 1;
 
         // Eliminate any vertical offset before moving in that direction
         var forward = transform.forward;
         forward.y = 0;
-        position += forward * verticalAxis * MovementSpeed * Time.deltaTime * runSpeed;
-        position += transform.right * horizontalAxis * MovementSpeed * Time.deltaTime * runSpeed;
+        position += forward * (verticalAxis * MovementSpeed * Time.deltaTime);// * runSpeed
+        position += transform.right * (horizontalAxis * MovementSpeed * Time.deltaTime);// * runSpeed
         
         // Assign to the cameraholder
         transform.parent.transform.position = new Vector3(position.x, position.y, position.z);

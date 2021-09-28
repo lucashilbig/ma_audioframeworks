@@ -44,7 +44,7 @@ public class PauseMenu : MonoBehaviour
         Cursor.lockState = CursorLockMode.Confined;
     }
     
-    private void Resume()
+    public void Resume()
     {
         _menu.SetActive(false);
         Time.timeScale = 1f;
