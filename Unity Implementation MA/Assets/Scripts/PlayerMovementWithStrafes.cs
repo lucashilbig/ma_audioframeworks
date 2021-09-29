@@ -67,6 +67,9 @@ public class PlayerMovementWithStrafes : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if(!gameObject.GetComponent<CharacterController>().enabled)
+            return;
+        
         IsGrounded = Physics.CheckSphere(GroundCheck.position, GroundDistance, GroundMask);
 
         QueueJump();

@@ -23,7 +23,6 @@ public class GameLogic : MonoBehaviour
     [Header("Settings")] public AudioFramework _audioFramework; //currently used audio Framework
     public bool _logResults;
     public bool _audioSourceVisible;
-    public bool _showDebugUI;
     public AudioClip[] _audioClips;
 
     [Header("References")] public GameObject _graphAudioManager;
@@ -36,31 +35,24 @@ public class GameLogic : MonoBehaviour
     public Text _audioFrameworkText;
     public Text _sourcePositionText;
     public Text _audioClipText;
-    public Text _audioVisibleText;
     public TextMeshProUGUI _scoreTextTmp;
     public TextMeshProUGUI _timeTextTmp;
     
     private GameObject _currAudioObj; //currently active instance of _audioPrefab or _audioAcousticsPrefab;
     private GameObject _currGuesserObj; //currently active instance of _guesserPrefab
     private GameObject _currLineObj; //currently active instance of _linePrefab
-    private GameObject[] _debugUIObjs;
     private Stopwatch _stopwatch;
     private int _idxCurrClip; //index of the currently playing clip from _audioClips. -1 means no clip 
-    private int _idxCurrPos; //index of current position in _positionOrder
-    private int[] _positionOrder = {22, 24, 4, 26, 28, 25, 33, 35, 1, 13, 15, 9, 
-        12, 11, 0, 16, 18, 19, 21, 4, 29, 32, 30, 5, 7, 8, 6}; //contains the indices of _objPositions for our test run
-
-    private AudioFramework[] _frameworkOrder =
-    {
-        AudioFramework.FMOD, AudioFramework.FMOD,AudioFramework.FMOD,AudioFramework.FMOD,
-        AudioFramework.FMOD,AudioFramework.FMOD,AudioFramework.GraphAudio,AudioFramework.GraphAudio,AudioFramework.GraphAudio,
-        AudioFramework.GraphAudio,AudioFramework.GraphAudio,AudioFramework.GraphAudio,AudioFramework.GraphAudio,AudioFramework.SteamAudio,
-        AudioFramework.SteamAudio,AudioFramework.SteamAudio,AudioFramework.SteamAudio,AudioFramework.SteamAudio,AudioFramework.SteamAudio,
-        AudioFramework.SteamAudio,AudioFramework.ProjectAcoustics,AudioFramework.ProjectAcoustics,AudioFramework.ProjectAcoustics,
-        AudioFramework.ProjectAcoustics,AudioFramework.ProjectAcoustics,AudioFramework.ProjectAcoustics,AudioFramework.ProjectAcoustics
-    }; //specifies the framework used for each entrance in _positionOrder
+    private int _idxCurrPos; //index of current position in _positionOrder[_idxCurrTest]
+    private int _idxCurrTest; //index of the current test variation in _positionOrder
+    private int[][] _positionOrder = { //contains the variations for indices of _objPositions for our test run
+        new int[] {22, 24, 4, 26, 28, 25, 33, 35, 1, 13}, //10 entries each
+        new int[] {15, 9, 12, 11, 0, 16, 18, 19, 21, 4},
+        new int[] {29, 32, 30, 5, 7, 8, 6, 12, 15, 13}
+    }; 
     private bool _enableGuessing; //if set to false, you cant spawn guess objects with left click
     private bool _guessFinished; //set to true after MakeGuess(), so we only calculate guess once
+    private bool _testStarted;
     private static bool _isGameFocused = true;
 
     public static bool IsGameFocused() => _isGameFocused;
@@ -73,6 +65,7 @@ public class GameLogic : MonoBehaviour
     {
         _idxCurrClip = (_audioClips.Length == 0) ? -1 : 0;
         _idxCurrPos = -1;
+        _idxCurrTest = 0;
         _enableGuessing = false;
         _guessFinished = true;
         _stopwatch = new Stopwatch();
@@ -84,23 +77,12 @@ public class GameLogic : MonoBehaviour
         SetAudioFramework(_audioFramework);
 
         #region UI
-
-        _debugUIObjs = GameObject.FindGameObjectsWithTag("DebugUI");
-
-        if (!_showDebugUI)
-            foreach (GameObject obj in _debugUIObjs)
-                obj.SetActive(false);
-        
-        if (_audioSourceVisible)
-            _audioVisibleText.text = "Audio Visible: On";
-        else
-            _audioVisibleText.text = "Audio Visible: Off";
-
         if (_idxCurrClip >= 0)
             _audioClipText.text = "Audio Clip: " + _audioClips[_idxCurrClip].name;
         else
             _audioClipText.text = "Audio Clip: no clip";
 
+        
         //Disable Score Text
         _scoreTextTmp.gameObject.SetActive(false);
 
@@ -137,13 +119,14 @@ public class GameLogic : MonoBehaviour
         if (!PauseMenu.IsPaused())
         {
             if (Input.GetKeyDown("1"))
-                NextAudioPosition();
-            if (Input.GetKeyDown("2"))
-                NextAudioClip();
-            if (Input.GetKeyDown("3"))
-                ToggleVisibilityAudioObj();
-            if (Input.GetKeyDown("h"))
-                ToggleDebugUI();
+                if(_testStarted)
+                    NextAudioPosition();
+                else
+                {
+                    SetAudioFramework(_audioFramework);
+                    int index = UnityEngine.Random.Range(0, _positionOrder[_idxCurrTest].Length);
+                    NewAudioPosition(index);
+                }
             if (_enableGuessing && Input.GetMouseButtonDown(0)) // left/primary click. Only spawn new object if guessing is enabled
                 SpawnGuesserObject();
             if (!_guessFinished && _currAudioObj != null && _currGuesserObj != null && Input.GetKeyDown(KeyCode.Return)) // Enter key. Can only make guess if we have source and guess positions
@@ -162,7 +145,7 @@ public class GameLogic : MonoBehaviour
     /// </summary>
     private void NewAudioPosition(int index)
     {
-        if (index < 0 || index >= _objPositions.Length)
+        if (index < 0 || index >= _positionOrder[_idxCurrTest].Length)
         {
             Debug.Log("Invalid source position index: " + index);
             return;
@@ -190,7 +173,7 @@ public class GameLogic : MonoBehaviour
 
         //instantiate new audio source gameObject
         _currAudioObj = Instantiate(_audioFramework == AudioFramework.ProjectAcoustics 
-            ? _audioAcousticsPrefab : _audioPrefab, _objPositions[_positionOrder[_idxCurrPos]], Quaternion.identity);
+            ? _audioAcousticsPrefab : _audioPrefab, _objPositions[_positionOrder[_idxCurrTest][_idxCurrPos]], Quaternion.identity);
         _currAudioObj.GetComponent<MeshRenderer>().enabled = _audioSourceVisible;
 
         //set audioClip on the new gameObject and activate object
@@ -201,24 +184,30 @@ public class GameLogic : MonoBehaviour
         _guessFinished = false;
     }
 
+   
     private void NextAudioPosition()
     {
         if (!_guessFinished)
             return;
 
-        if (_idxCurrPos + 1 >= _positionOrder.Length || _idxCurrPos < 0)
+        if (_idxCurrPos + 1 >= _positionOrder[_idxCurrTest].Length || _idxCurrPos < 0)
         {
             _scoreTextTmp.text = "Test finished";
+            _testStarted = false;
             return;
         }
 
         //Move player to previous audio source as start position
-        var startPos = _objPositions[_positionOrder[_idxCurrPos]];
+        var startPos = _objPositions[_positionOrder[_idxCurrTest][_idxCurrPos]];
         startPos.y += 0.5f;
         _playerCamera.transform.parent.position = startPos;
+
+        //first 5 positions have Cantina Band and next 5 footsteps
+        _idxCurrClip = (_idxCurrPos + 1 < 5) ? 0 : 1;
+        _audioClipText.text = "Audio Clip: " + _audioClips[_idxCurrClip].name;
         
-        //set audio framework to use for this position
-        SetAudioFramework(_frameworkOrder[_idxCurrPos + 1]);
+        //set audio framework to use for this position (this also calls setAudioClipOnObj())
+        SetAudioFramework(_audioFramework);
         
         NewAudioPosition(_idxCurrPos + 1);
     }
@@ -246,23 +235,14 @@ public class GameLogic : MonoBehaviour
         {
             if (_currAudioObj != null)
                 _currAudioObj.GetComponent<MeshRenderer>().enabled = true;
-            _audioVisibleText.text = "Audio Visible: On";
         }
         else
         {
             if (_currAudioObj != null)
                 _currAudioObj.GetComponent<MeshRenderer>().enabled = false;
-            _audioVisibleText.text = "Audio Visible: Off";
         }
     }
 
-    private void ToggleDebugUI()
-    {
-        _showDebugUI = (_showDebugUI) ? false : true;
-
-        foreach (GameObject obj in _debugUIObjs)
-            obj.SetActive(_showDebugUI);
-    }
 
     private void SpawnGuesserObject()
     {
@@ -289,10 +269,10 @@ public class GameLogic : MonoBehaviour
         float distance = Vector3.Distance(_currAudioObj.transform.position, _currGuesserObj.transform.position);
         
         //log results
-        if (_logResults)
+        if (_logResults && _testStarted)
             using (StreamWriter sw = File.AppendText(GetLogPath()))
             {
-                sw.WriteLine(DateTime.Now.ToShortTimeString() + " -- POSITION: " + _idxCurrPos +
+                sw.WriteLine(DateTime.Now.ToShortTimeString() + " -- " + _audioFramework + " POSITION: " + _idxCurrPos +
                              " -- DISTANZ: " + distance.ToString("0.0") + " -- ZEIT: " + elapsedTime);
             }
 
@@ -319,7 +299,7 @@ public class GameLogic : MonoBehaviour
             if (obj.CompareTag("AcousticsBase"))
             {
                 Destroy(obj);
-                obj = Instantiate(_audioPrefab, _objPositions[_positionOrder[_idxCurrPos]], Quaternion.identity);
+                obj = Instantiate(_audioPrefab, _objPositions[_positionOrder[_idxCurrTest][_idxCurrPos]], Quaternion.identity);
                 obj.GetComponent<MeshRenderer>().enabled = _audioSourceVisible;
             }
                 
@@ -332,7 +312,7 @@ public class GameLogic : MonoBehaviour
             //We need to create a new gameObject instance otherwise Steam Audio will be buggy
             if (obj != null)
                 Destroy(obj);
-            obj = Instantiate(_audioPrefab, _objPositions[_positionOrder[_idxCurrPos]], Quaternion.identity);
+            obj = Instantiate(_audioPrefab, _objPositions[_positionOrder[_idxCurrTest][_idxCurrPos]], Quaternion.identity);
             obj.GetComponent<MeshRenderer>().enabled = _audioSourceVisible;
 
             //Set audioclip/Event
@@ -355,7 +335,7 @@ public class GameLogic : MonoBehaviour
             if (obj.CompareTag("FmodBase"))
             {
                 Destroy(obj);
-                obj = Instantiate(_audioAcousticsPrefab, _objPositions[_positionOrder[_idxCurrPos]], Quaternion.identity);
+                obj = Instantiate(_audioAcousticsPrefab, _objPositions[_positionOrder[_idxCurrTest][_idxCurrPos]], Quaternion.identity);
                 obj.GetComponent<MeshRenderer>().enabled = _audioSourceVisible;
             }
             var source = obj.GetComponentInChildren<AudioSource>();
@@ -385,9 +365,6 @@ public class GameLogic : MonoBehaviour
 
     private void SetAudioFramework(AudioFramework audioFramework)
     {
-        if (audioFramework == _audioFramework)
-            return;
-        
         _audioFramework = audioFramework;
 
         switch (_audioFramework)
@@ -423,6 +400,39 @@ public class GameLogic : MonoBehaviour
                 _audioFrameworkText.text = "Audio Framework: A";
                 break;
         }
+    }
+    
+    
+    public void StartTest(GameObject dropdown)
+    {
+        //get framework we want to use from dropdown
+        var selectedIndex = dropdown.GetComponent<TMP_Dropdown>().value;
+        var framework = (AudioFramework) Enum.GetValues(typeof(AudioFramework)).GetValue(selectedIndex);
+
+        //Move player to start position
+        _playerCamera.transform.parent.position = new Vector3(0f,1.06f,-6.426f);
+      
+        //Select random new test variation that is different from current
+        int newIdx = UnityEngine.Random.Range(0, _positionOrder.Length);
+        while (newIdx == _idxCurrTest)
+            newIdx = UnityEngine.Random.Range(0, _positionOrder.Length);
+        _idxCurrTest = newIdx;
+        _idxCurrPos = 0;
+        
+        //log
+        using (StreamWriter sw = File.AppendText(GameLogic.GetLogPath()))
+        {
+            sw.WriteLine(DateTime.Now.ToShortTimeString() + " -- STARTED TEST VARIATION " + _idxCurrTest + " WITH " + framework + " --");
+        }
+
+        //set audio framework to use for this position
+        SetAudioFramework(framework);
+        NewAudioPosition(0);
+
+        _testStarted = true;
+        
+        //exit pause menu
+        gameObject.GetComponent<PauseMenu>().Resume();
     }
 
     /// <summary>
@@ -503,41 +513,6 @@ public class GameLogic : MonoBehaviour
                     new Vector3(-62.308f,-3.421f,-4.185f), new Vector3(-41.81f,1.036f,-38.435f), new Vector3(-53.048f,-2.789f,-45.164f), new Vector3(-51.76f,9.398f,-48.6f),
                     new Vector3(-67.213f,1.91f,-32.59f)};
         return null;
-    }
-
-    public void StartTest()
-    {
-        using (StreamWriter sw = File.AppendText(GameLogic.GetLogPath()))
-        {
-            sw.WriteLine(DateTime.Now.ToShortTimeString() + " ---- STARTED TEST ----");
-        }
-        //Move player to start position
-        _playerCamera.transform.parent.position = new Vector3(0f,1.06f,-6.426f);
-      
-        _idxCurrPos = 0;
-        //set audio framework to use for this position
-        SetAudioFramework(_frameworkOrder[_idxCurrPos]);
-        NewAudioPosition(0);
-        
-        //exit pause menu
-        gameObject.GetComponent<PauseMenu>().Resume();
-    }
-    
-    public void SelectPosition(GameObject dropdown)
-    {
-        var selectedIndex = dropdown.GetComponent<TMP_Dropdown>().value;
-        using (StreamWriter sw = File.AppendText(GameLogic.GetLogPath()))
-        {
-            sw.WriteLine(DateTime.Now.ToShortTimeString() + " ---- SELECTED POSITION " + selectedIndex + " ----");
-        }
-        
-        //Move player to current source position as starting point
-        var startPos = _objPositions[_positionOrder[_idxCurrPos]];
-        startPos.y += 0.5f;
-        _playerCamera.transform.parent.position = startPos;
-        
-        //set new sound source position and start countdown for player
-        NewAudioPosition(selectedIndex);
     }
 
     public static string GetLogPath()
