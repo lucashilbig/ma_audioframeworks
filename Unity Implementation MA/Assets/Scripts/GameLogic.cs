@@ -46,9 +46,10 @@ public class GameLogic : MonoBehaviour
     private int _idxCurrPos; //index of current position in _positionOrder[_idxCurrTest]
     private int _idxCurrTest; //index of the current test variation in _positionOrder
     private int[][] _positionOrder = { //contains the variations for indices of _objPositions for our test run
-        new int[] {22, 24, 4, 26, 28, 25, 33, 35, 1, 13}, //10 entries each
-        new int[] {15, 9, 12, 11, 0, 16, 18, 19, 21, 4},
-        new int[] {29, 32, 30, 5, 7, 8, 6, 12, 15, 13}
+        new int[] {7, 3, 23, 19, 17, 25, 28, 31, 34, 9}, //10 entries each
+        new int[] {13, 11, 6, 4, 26, 24, 16, 20, 33, 36},
+        new int[] {33, 30, 25, 5, 10, 15, 17, 19, 21, 22},
+        new int[] {22, 20, 1, 14, 16, 29, 27, 5, 8, 35}
     }; 
     private bool _enableGuessing; //if set to false, you cant spawn guess objects with left click
     private bool _guessFinished; //set to true after MakeGuess(), so we only calculate guess once
@@ -169,7 +170,7 @@ public class GameLogic : MonoBehaviour
         _idxCurrPos = index;
         
         //set info text
-        _sourcePositionText.text = "Source Position: " + _idxCurrPos;
+        _sourcePositionText.text = "Source Position: " + (_idxCurrPos + 1);
 
         //instantiate new audio source gameObject
         _currAudioObj = Instantiate(_audioFramework == AudioFramework.ProjectAcoustics 
@@ -403,21 +404,23 @@ public class GameLogic : MonoBehaviour
     }
     
     
-    public void StartTest(GameObject dropdown)
+    public void StartTest(GameObject button)
     {
+        //get dropdown values for framework and test variant
+        var dropdownFramework = button.transform.Find("DropdownFramework").GetComponent<TMP_Dropdown>().value;
+        var dropdownVariation = button.transform.Find("DropdownVariation").GetComponent<TMP_Dropdown>().value;
+        _idxCurrTest = dropdownVariation;
+        _idxCurrPos = 0;
+        
+        //set audio clip to cantina band
+        _idxCurrClip = 0;
+        _audioClipText.text = "Audio Clip: " + _audioClips[_idxCurrClip].name;
+        
         //get framework we want to use from dropdown
-        var selectedIndex = dropdown.GetComponent<TMP_Dropdown>().value;
-        var framework = (AudioFramework) Enum.GetValues(typeof(AudioFramework)).GetValue(selectedIndex);
+        var framework = (AudioFramework) Enum.GetValues(typeof(AudioFramework)).GetValue(dropdownFramework);
 
         //Move player to start position
         _playerCamera.transform.parent.position = new Vector3(0f,1.06f,-6.426f);
-      
-        //Select random new test variation that is different from current
-        int newIdx = UnityEngine.Random.Range(0, _positionOrder.Length);
-        while (newIdx == _idxCurrTest)
-            newIdx = UnityEngine.Random.Range(0, _positionOrder.Length);
-        _idxCurrTest = newIdx;
-        _idxCurrPos = 0;
         
         //log
         using (StreamWriter sw = File.AppendText(GameLogic.GetLogPath()))
@@ -507,7 +510,7 @@ public class GameLogic : MonoBehaviour
                     new Vector3(-43.63f,1.79f,-94.6f), new Vector3(10.73f,-0.252f,-62.763f), new Vector3(-4.852f,-11.627f,-58.998f), new Vector3(10.261f,-16.608f,-66.23f),
                     new Vector3(3.522f,-7.632f,-70.471f), new Vector3(35.179f,-0.285f,-54.427f), new Vector3(50.48f,-1.214f,-70.51f), new Vector3(64.731f,2.509f,-84.773f),
                     new Vector3(49.387f,1.082f,-15.947f), new Vector3(58.234f,5.401f,-15.947f), new Vector3(64.34f,10.59f,-19.08f), new Vector3(32.791f,-0.326f,8.006f),
-                    new Vector3(26.845f,8.9f,3.661f), new Vector3(21.745f,11.305f,18.161f), new Vector3(1.807f,3.396f,29.594f), new Vector3(1.25f,6.152f,23.609f),
+                    new Vector3(26.845f,8.9f,3.661f), new Vector3(21.745f,11.305f,18.161f), new Vector3(1.807f,3.396f,29.594f), new Vector3(1.25f,6.152f,24.7f),
                     new Vector3(-0.803f,7.34f,41.145f), new Vector3(-26.863f,1.35f,8.555f), new Vector3(-33.451f,7.42f,17.973f), new Vector3(-35.67f,0.845f,31.522f),
                     new Vector3(-36.96f,7.438f,40.47f), new Vector3(-41.255f,-1.592f,-9.253f), new Vector3(-54.763f,-6.21f,-17.361f), new Vector3(-69.362f,-6.698f,8.647f),
                     new Vector3(-62.308f,-3.421f,-4.185f), new Vector3(-41.81f,1.036f,-38.435f), new Vector3(-53.048f,-2.789f,-45.164f), new Vector3(-51.76f,9.398f,-48.6f),
