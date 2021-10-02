@@ -21,6 +21,7 @@ namespace Unity.Collections {
     }
 
     /// <summary>
+    /// Credit: https://github.com/Amarcolina/NativeHeap
     /// This is a basic implementation of the MinHeap/MaxHeap data structure.  It allows you
     /// to insert objects into the container with a O(log(n)) cost per item, and it allows you
     /// to extract the min/max from the container with a O(log(n)) cost per item.
@@ -414,8 +415,8 @@ namespace Unity.Collections {
 
         #region IMPLEMENTATION
 
-#if NHEAP_SAFE
         private readonly static int _nextId = 1;
+#if NHEAP_SAFE
         private int _id;
 
         internal AtomicSafetyHandle m_Safety;
